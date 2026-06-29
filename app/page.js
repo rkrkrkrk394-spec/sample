@@ -555,7 +555,7 @@ function SectionBand({ label, prepared }) {
       <div style={{ fontSize: 16, fontWeight: 800 }}>{label}</div>
       <Stat label="데이터 구간" value={prepared.period} />
       <Stat label="최근월 수출중량" value={`${fmtInt(prepared.latest.wgt)} kg`} />
-      <Stat label="최근월 단가" value={`$ ${prepared.latest.unit.toFixed(2)} /kg`} />
+      <Stat label="최근월 단가" value={prepared.latest.unit != null ? `$ ${prepared.latest.unit.toFixed(2)} /kg` : "—"} />
     </div>
   );
 }
@@ -689,4 +689,4 @@ function ChartCard({ index, title, sub, dx, color, children }) {
 }
 function tipBox(children) { return <div style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 8, padding: "8px 11px", fontSize: 12.5, boxShadow: "0 2px 8px rgba(20,36,59,0.08)" }}>{children}</div>; }
 function WgtTip({ active, payload, wUnit }) { if (!active || !payload || !payload.length) return null; const d = payload[0].payload; return tipBox(<><div style={{ fontWeight: 700, marginBottom: 4 }}>{d.ym}</div><div style={{ color: C.wgt }}>수출중량 {fmtInt(d.rawWgt)} kg</div><div style={{ color: C.muted }}>≈ {fmtInt(d.wgtDisp)} {wUnit}</div></>); }
-function UnitTip({ active, payload }) { if (!active || !payload || !payload.length) return null; const d = payload[0].payload; return tipBox(<><div style={{ fontWeight: 700, marginBottom: 4 }}>{d.ym}</div><div style={{ color: C.unit }}>단가 $ {d.unit.toFixed(3)} /kg</div><div style={{ color: C.muted }}>금액 ${fmtInt(d.rawDlr)} · 중량 {fmtInt(d.rawWgt)}kg</div></>); }
+function UnitTip({ active, payload }) { if (!active || !payload || !payload.length) return null; const d = payload[0].payload; if (d.unit == null) return null; return tipBox(<><div style={{ fontWeight: 700, marginBottom: 4 }}>{d.ym}</div><div style={{ color: C.unit }}>단가 $ {d.unit.toFixed(3)} /kg</div><div style={{ color: C.muted }}>금액 ${fmtInt(d.rawDlr)} · 중량 {fmtInt(d.rawWgt)}kg</div></>); }
