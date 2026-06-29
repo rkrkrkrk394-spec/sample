@@ -43,44 +43,50 @@ export async function GET(request) {
   let productName = "";
 
   try {
+    const ROWS = 2000;      // 한 페이지당 행 수
+    const MAX_PAGES = 40;    // 안전 상한 (무한 루프 방지)
     for (const y of years) {
       const start = `${y}01`;
       const end = `${y}12`;
 
-      const params = new URLSearchParams({
-        strtYymm: start,
-        endYymm: end,
-        hsSgn: hs,
-        cntyCd: cnty,        // 비어 있으면 전체 국가, 값이 있으면 해당 국가
-        numOfRows: "20000",
-        pageNo: "1",
-      });
+      for (let page = 1; page <= MAX_PAGES; page++) {
+        const params = new URLSearchParams({
+          strtYymm: start,
+          endYymm: end,
+          hsSgn: hs,
+          cntyCd: cnty,        // 비어 있으면 전체 국가, 값이 있으면 해당 국가
+          numOfRows: String(ROWS),
+          pageNo: String(page),
+        });
 
-      // serviceKey는 (브라우저에서 작동한) 인코딩 키를 그대로 붙입니다 (추가 인코딩 안 함)
-      const url = `${BASE}?serviceKey=${KEY}&${params.toString()}`;
+        // serviceKey는 (브라우저에서 작동한) 인코딩 키를 그대로 붙입니다 (추가 인코딩 안 함)
+        const url = `${BASE}?serviceKey=${KEY}&${params.toString()}`;
 
-      const res = await fetch(url, { cache: "no-store" });
-      const xml = await res.text();
+        const res = await fetch(url, { cache: "no-store" });
+        const xml = await res.text();
 
-      const items = xml.split("<item>").slice(1);
-      for (const chunk of items) {
-        const yearTag = tag(chunk, "year");
-        const hsTag = tag(chunk, "hsCd");
-        // "총계" 행과 합계용 더미행(hsCd="-")은 건너뛰고, 실제 월별 국가 행만 합산
-        if (yearTag === "총계" || hsTag === "-" || !yearTag.includes(".")) continue;
+        const items = xml.split("<item>").slice(1);
+        if (items.length === 0) break; // 더 받을 데이터 없음
+        for (const chunk of items) {
+          const yearTag = tag(chunk, "year");
+          const hsTag = tag(chunk, "hsCd");
+          // "총계" 행과 합계용 더미행(hsCd="-")은 건너뛰고, 실제 월별 국가 행만 합산
+          if (yearTag === "총계" || hsTag === "-" || !yearTag.includes(".")) continue;
 
-        const [yy, mmRaw] = yearTag.split(".");
-        const ym = `${yy}-${String(mmRaw).padStart(2, "0")}`;
-        const wgt = parseFloat(tag(chunk, "expWgt")) || 0;
-        const dlr = parseFloat(tag(chunk, "expDlr")) || 0;
+          const [yy, mmRaw] = yearTag.split(".");
+          const ym = `${yy}-${String(mmRaw).padStart(2, "0")}`;
+          const wgt = parseFloat(tag(chunk, "expWgt")) || 0;
+          const dlr = parseFloat(tag(chunk, "expDlr")) || 0;
 
-        if (!productName) {
-          const k = tag(chunk, "statKor");
-          if (k && k !== "-") productName = k;
+          if (!productName) {
+            const k = tag(chunk, "statKor");
+            if (k && k !== "-") productName = k;
+          }
+          if (!monthly[ym]) monthly[ym] = { wgt: 0, dlr: 0 };
+          monthly[ym].wgt += wgt;
+          monthly[ym].dlr += dlr;
         }
-        if (!monthly[ym]) monthly[ym] = { wgt: 0, dlr: 0 };
-        monthly[ym].wgt += wgt;
-        monthly[ym].dlr += dlr;
+        if (items.length < ROWS) break; // 마지막 페이지
       }
     }
   } catch (e) {
