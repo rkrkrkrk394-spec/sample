@@ -162,12 +162,18 @@ export default function App() {
   const [country, setCountry] = useState(null);
   const [countryOn, setCountryOn] = useState(false);
   const [cSeries, setCSeries] = useState(null);
+  const [marketDB, setMarketDB] = useState(null);
 
   // 실제 사이트(/public/hs_codes.json)에서는 전체 데이터를 불러오고, 없으면 샘플 사용
   useEffect(() => {
     fetch("/hs_codes.json")
       .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then((arr) => { if (Array.isArray(arr) && arr.length > 200) { setData(arr); setDataNote(`전체 ${arr.length.toLocaleString("ko-KR")}개 품목`); } })
+      .catch(() => {});
+    // 중요 품목 시장 데이터(미리 집계). 있으면 API 없이 시장 분석을 바로 제공.
+    fetch("/market_data.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j) setMarketDB(j); })
       .catch(() => {});
   }, []);
 
@@ -183,7 +189,7 @@ export default function App() {
             onBack={() => setStep("select")}
             onDiagnose={({ series, cSeries }) => { setSeries(series); setCSeries(cSeries); setStep("result"); }} />
         )}
-        {step === "result" && <Result picked={picked} series={series} cSeries={cSeries} country={countryOn ? country : null} onBack={() => setStep("input")} onRestart={() => setStep("select")} />}
+        {step === "result" && <Result picked={picked} series={series} cSeries={cSeries} country={countryOn ? country : null} marketDB={marketDB} onBack={() => setStep("input")} onRestart={() => setStep("select")} />}
       </div>
     </div>
   );
@@ -554,7 +560,7 @@ function SectionBand({ label, prepared }) {
   );
 }
 
-function Result({ picked, series, cSeries, country, onBack, onRestart }) {
+function Result({ picked, series, cSeries, country, marketDB, onBack, onRestart }) {
   const selfOverall = useMemo(() => prep(series), [series]);
   const selfCtry = useMemo(() => prep(cSeries), [cSeries]);
 
@@ -562,30 +568,34 @@ function Result({ picked, series, cSeries, country, onBack, onRestart }) {
 
   useEffect(() => {
     let alive = true;
+    const toSeries = ([ym, w, d]) => ({ ym, wgt: w, dlr: d, unit: w > 0 ? d / w : null });
     (async () => {
       setMkt({ loading: true, overall: null, country: null, demo: false, err: "" });
       const res = { loading: false, overall: null, country: null, demo: false, err: "" };
-      try {
-        const r = await fetch(`/api/trade?hs=${picked.code}`);
-        const j = await r.json();
-        if (j.series && j.series.length) res.overall = j.series;
-      } catch (e) {}
-      if (!res.overall && MKT[picked.code]) {
-        res.overall = MKT[picked.code].map(([ym, w, d]) => ({ ym, wgt: w, dlr: d, unit: w > 0 ? d / w : null }));
-        res.demo = true;
+
+      // 1순위: 미리 집계된 시장 데이터 파일 (중요 품목)
+      const db = marketDB && marketDB[picked.code];
+      if (db) {
+        res.overall = db.all.map(toSeries);
+        if (country && db.byCountry && db.byCountry[country.code]) res.country = db.byCountry[country.code].map(toSeries);
       }
+
+      // 2순위: 관세청 API (파일에 없는 품목)
+      if (!res.overall) {
+        try { const r = await fetch(`/api/trade?hs=${picked.code}`); const j = await r.json(); if (j.series && j.series.length) res.overall = j.series; } catch (e) {}
+      }
+      // 3순위: 데모 폴백
+      if (!res.overall && MKT[picked.code]) { res.overall = MKT[picked.code].map(toSeries); res.demo = true; }
       if (!res.overall) res.err = "시장 데이터를 불러오지 못했습니다. (API 한도 또는 연결 상태를 확인하세요)";
-      if (country) {
-        try {
-          const r2 = await fetch(`/api/trade?hs=${picked.code}&cnty=${country.code}`);
-          const j2 = await r2.json();
-          if (j2.series && j2.series.length) res.country = j2.series;
-        } catch (e) {}
+
+      // 국가 시장: 파일에 없으면 API
+      if (country && !res.country) {
+        try { const r2 = await fetch(`/api/trade?hs=${picked.code}&cnty=${country.code}`); const j2 = await r2.json(); if (j2.series && j2.series.length) res.country = j2.series; } catch (e) {}
       }
       if (alive) setMkt(res);
     })();
     return () => { alive = false; };
-  }, [picked, country]);
+  }, [picked, country, marketDB]);
 
   const mktOverall = useMemo(() => prep(mkt.overall), [mkt.overall]);
   const mktCtry = useMemo(() => prep(mkt.country), [mkt.country]);
