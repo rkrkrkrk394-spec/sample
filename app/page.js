@@ -107,6 +107,12 @@ const CH_NAMES = {
   "97": "예술품·골동품"
 };
 
+// 국가 드롭다운 (ISO 2자리 코드 + 한글명) — 외교부 국가표준코드
+const COUNTRIES = [["GH","가나"],["GA","가봉"],["GY","가이아나"],["GM","감비아"],["GG","건지"],["GP","과들루프"],["GT","과테말라"],["GU","괌"],["VA","교황청"],["GD","그레나다"],["GR","그리스"],["GL","그린란드"],["GN","기니"],["GW","기니비사우"],["NR","나우루"],["NG","나이지리아"],["SS","남수단"],["ZA","남아프리카공화국"],["NL","네덜란드"],["AN","네덜란드령 안틸레스"],["NP","네팔연방"],["NO","노르웨이"],["NF","노퍽섬"],["NC","뉴 칼레도니아"],["NZ","뉴질랜드"],["NU","니우에"],["NE","니제르"],["NI","니카라과"],["TW","대만"],["KR","대한민국"],["DK","덴마크"],["DO","도미니카공화국"],["DM","도미니카연방"],["DE","독일"],["TL","동티모르"],["LA","라오스"],["LR","라이베리아"],["LV","라트비아"],["RU","러시아"],["LB","레바논"],["LS","레소토"],["RE","레위니옹"],["RO","루마니아"],["LU","룩셈부르크"],["RW","르완다"],["LY","리비아"],["LT","리투아니아"],["LI","리히텐슈타인"],["MG","마다가스카르"],["MQ","마르티니크"],["MH","마셜제도"],["YT","마요트"],["FM","마이크로네시아연방"],["MO","마카오"],["MW","말라위"],["MY","말레이시아"],["ML","말리"],["IM","맨 섬"],["MX","멕시코"],["MC","모나코"],["MA","모로코"],["MU","모리셔스"],["MR","모리타니아"],["MZ","모잠비크"],["ME","몬테네그로"],["MS","몬트세랫"],["MD","몰도바"],["MV","몰디브"],["MT","몰타"],["MN","몽골"],["UM","미국령 군소 제도"],["VI","미국령 버진아일랜드"],["MM","미얀마"],["US","미합중국"],["VU","바누아투"],["BH","바레인"],["BB","바베이도스"],["BS","바하마"],["BD","방글라데시"],["BM","버뮤다"],["BJ","베냉"],["VE","베네수엘라볼리바르"],["VN","베트남"],["BE","벨기에"],["BY","벨라루스"],["BZ","벨리즈"],["BQ","보네르섬"],["BA","보스니아헤르체고비나"],["BW","보츠와나"],["BO","볼리비아"],["BI","부룬디"],["BF","부르키나파소"],["BT","부탄"],["MP","북마리아나 군도"],["MK","북마케도니아"],["BG","불가리아"],["BR","브라질"],["BN","브루나이"],["WS","사모아"],["SA","사우디아라비아"],["CY","사이프러스"],["EH","서부사하라"],["SM","산마리노"],["ST","상투메프린시페"],["BL","생바르텔레미"],["PM","생피에르·미클롱"],["SN","세네갈"],["RS","세르비아"],["SC","세이셸"],["SH","세인트 헬레나 섬"],["LC","세인트루시아"],["MF","세인트마틴 섬"],["VC","세인트빈센트그레나딘"],["KN","세인트키츠네비스"],["SO","소말리아"],["SB","솔로몬제도"],["SD","수단"],["SR","수리남"],["LK","스리랑카"],["SE","스웨덴"],["CH","스위스"],["ES","스페인"],["SK","슬로바키아"],["SI","슬로베니아"],["SY","시리아"],["SL","시에라리온"],["SX","신트마르턴"],["SG","싱가포르"],["AE","아랍에미리트"],["AW","아루바"],["AM","아르메니아"],["AR","아르헨티나"],["IS","아이슬란드"],["HT","아이티"],["IE","아일랜드"],["AZ","아제르바이잔"],["AF","아프가니스탄"],["AD","안도라"],["AL","알바니아"],["DZ","알제리"],["AO","앙골라"],["AG","앤티가바부다"],["AI","앵귈라"],["ER","에리트레아"],["SZ","에스와티니"],["EE","에스토니아"],["EC","에콰도르"],["ET","에티오피아"],["SV","엘살바도르"],["GB","영국"],["VG","영국령 버진 아일랜드"],["YE","예멘"],["OM","오만"],["AT","오스트리아"],["HN","온두라스"],["JO","요르단"],["UG","우간다"],["UY","우루과이"],["UZ","우즈베키스탄"],["UA","우크라이나"],["IQ","이라크"],["IR","이란"],["IL","이스라엘"],["EG","이집트"],["IT","이탈리아"],["IN","인도"],["ID","인도네시아"],["JP","일본"],["JM","자메이카"],["ZM","잠비아"],["JE","저지"],["GQ","적도기니"],["KP","조선민주주의인민공화국"],["GE","조지아"],["CN","중국"],["CF","중앙아프리카"],["DJ","지부티"],["GI","지브롤터"],["ZW","짐바브웨"],["TD","차드"],["CZ","체코"],["CL","칠레"],["CM","카메룬"],["CV","카보베르데"],["KZ","카자흐스탄"],["QA","카타르"],["KH","캄보디아"],["CA","캐나다"],["KE","케냐"],["KY","케이맨제도"],["KM","코모로"],["XK","코소보"],["CR","코스타리카"],["CC","코코스제도"],["CI","코트디부아르"],["CO","콜롬비아"],["CG","콩고"],["CD","콩고민주공화국"],["CU","쿠바"],["KW","쿠웨이트"],["CK","쿡제도"],["CW","퀴라소"],["HR","크로아티아"],["CX","크리스마스섬"],["KG","키르기즈공화국"],["KI","키리바시"],["TJ","타지키스탄"],["TZ","탄자니아"],["TH","태국"],["TC","터크스·케이커스 제도"],["TG","토고"],["TO","통가"],["TM","투르크메니스탄"],["TV","투발루"],["TN","튀니지"],["TR","튀르키예공화국"],["TT","트리니다드토바고"],["PA","파나마"],["PY","파라과이"],["PK","파키스탄"],["PG","파푸아뉴기니"],["PW","팔라우"],["PS","팔레스타인"],["FO","페로제도"],["PE","페루"],["PT","포르투갈"],["FK","포클랜드 제도"],["PL","폴란드"],["PR","푸에르토리코"],["FR","프랑스"],["GF","프랑스령 기아나"],["PF","프랑스령 폴리네시아"],["FJ","피지"],["FI","핀란드"],["PH","필리핀"],["HU","헝가리"],["AU","호주"],["HK","홍콩"]];
+
+// 데모 시장 폴백 (HS 1902 7개 품목, 2023~2025). [ym, 수출중량, 수출금액] — API가 막혔을 때 미리보기용. 실서비스는 /api/trade 사용.
+const MKT = {"1902111000":[["2023-01",603,2440],["2023-02",3093,12658],["2023-03",7858,8038],["2023-04",9358,8702],["2023-05",2875,12636],["2023-06",2966,12411],["2023-07",8219,15542],["2023-08",3861,20338],["2023-09",19484,73983],["2023-10",705,848],["2023-11",5127,10376],["2023-12",2277,4488],["2024-01",27980,59216],["2024-02",3824,21759],["2024-03",88,618],["2024-04",2828,10231],["2024-05",468,1633],["2024-06",3080,4175],["2024-07",841,3485],["2024-08",1611,5470],["2024-09",253,436],["2024-10",1160,3731],["2024-11",1952,6722],["2024-12",2432,3592],["2025-01",830,1927],["2025-02",2029,2048],["2025-03",4149,8256],["2025-04",2027,5358],["2025-05",1724,4660],["2025-06",3729,7933],["2025-08",2728,3166],["2025-09",3486,5287],["2025-10",22344,24042],["2025-11",37918,160423],["2025-12",236,570]],"1902191000":[["2023-01",972281,2042682],["2023-02",1418205,3028316],["2023-03",1441360,3153927],["2023-04",1578699,3250848],["2023-05",1317904,2953503],["2023-06",1308635,2868389],["2023-07",945480,2228643],["2023-08",1296235,2738254],["2023-09",1325641,2750491],["2023-10",1179593,2585964],["2023-11",1741797,3569391],["2023-12",1418432,3028071],["2024-01",1643380,3261468],["2024-02",1257103,2592353],["2024-03",1236675,2551895],["2024-04",1472529,2905768],["2024-05",1464549,3119418],["2024-06",1340631,2825905],["2024-07",1632932,3292648],["2024-08",1248067,2469391],["2024-09",1343584,2739878],["2024-10",1225253,2537020],["2024-11",1643955,3203261],["2024-12",1587342,3034935],["2025-01",1322564,2506163],["2025-02",1670252,3147788],["2025-03",1698070,3434064],["2025-04",1572846,2992212],["2025-05",1341761,2749633],["2025-06",1268995,2477753],["2025-07",1487713,2973610],["2025-08",1858342,3484287],["2025-09",1730571,3143488],["2025-10",1557646,2876329],["2025-11",1418634,2748484],["2025-12",1386307,2704435]],"1902192000":[["2023-01",124067,532000],["2023-02",144765,633883],["2023-03",148203,618292],["2023-04",130477,582436],["2023-05",134760,544060],["2023-06",191990,757130],["2023-07",132450,562028],["2023-08",124667,542411],["2023-09",136932,558380],["2023-10",103807,448317],["2023-11",151295,629967],["2023-12",109622,462299],["2024-01",158290,681204],["2024-02",149262,589700],["2024-03",155536,663607],["2024-04",136711,539073],["2024-05",140142,556342],["2024-06",152857,585628],["2024-07",141360,567456],["2024-08",108351,458090],["2024-09",112840,491077],["2024-10",131261,555422],["2024-11",124192,534236],["2024-12",153134,629796],["2025-01",115856,479746],["2025-02",138067,570409],["2025-03",170349,671579],["2025-04",193618,775379],["2025-05",153503,564986],["2025-06",172693,676191],["2025-07",133026,613880],["2025-08",88790,425806],["2025-09",140188,556199],["2025-10",85885,315216],["2025-11",112877,458305],["2025-12",142250,596224]],"1902193000":[["2023-01",127478,337304],["2023-02",338673,952820],["2023-03",450671,1115732],["2023-04",521804,1264863],["2023-05",481043,1216401],["2023-06",466516,1212291],["2023-07",259549,686051],["2023-08",283218,761045],["2023-09",221462,570535],["2023-10",196836,482595],["2023-11",72442,197822],["2023-12",82498,210183],["2024-01",156638,425276],["2024-02",372463,892588],["2024-03",551855,1484535],["2024-04",451182,1221612],["2024-05",415632,1092273],["2024-06",291433,701936],["2024-07",339782,782071],["2024-08",312605,749679],["2024-09",168420,418073],["2024-10",145797,405896],["2024-11",141842,331352],["2024-12",147188,431348],["2025-01",100329,199633],["2025-02",227237,542979],["2025-03",395687,998956],["2025-04",543967,1258864],["2025-05",455582,1219930],["2025-06",385203,1027001],["2025-07",340463,819851],["2025-08",305136,885360],["2025-09",263814,722033],["2025-10",144196,415133],["2025-11",181987,439273],["2025-12",171956,463357]],"1902200000":[["2023-01",1301291,4617582],["2023-02",1542662,5544371],["2023-03",1457505,5324077],["2023-04",1238373,4674720],["2023-05",1373142,5045040],["2023-06",1737328,6183390],["2023-07",1326948,4813758],["2023-08",1359380,4863748],["2023-09",1318222,4801730],["2023-10",1817175,6353555],["2023-11",2217879,7595785],["2023-12",1728766,6609678],["2024-01",1381371,5227935],["2024-02",1497612,5602173],["2024-03",1730043,6698360],["2024-04",1740242,6223970],["2024-05",1588115,5432885],["2024-06",1532718,5422358],["2024-07",1637436,5511056],["2024-08",1468045,4889246],["2024-09",1404161,4870929],["2024-10",1549530,5592672],["2024-11",1662063,5237180],["2024-12",1332109,4797264],["2025-01",1522605,4787797],["2025-02",1716578,5475844],["2025-03",1527110,5182964],["2025-04",1856955,6274550],["2025-05",1536690,5080842],["2025-06",1619746,5102731],["2025-07",2009860,6444285],["2025-08",1621904,5290857],["2025-09",1531975,5248802],["2025-10",1064878,3877425],["2025-11",1451831,5235252],["2025-12",1266129,4639337]],"1902301010":[["2023-01",16830586,61505999],["2023-02",18925369,70718110],["2023-03",19637411,75634199],["2023-04",18550467,73951045],["2023-05",18934965,75070951],["2023-06",22629768,89168269],["2023-07",19264384,75921065],["2023-08",21126924,85657529],["2023-09",22751201,89605626],["2023-10",22705376,87954115],["2023-11",23437174,90776919],["2023-12",19413391,76438881],["2024-01",21223142,85751012],["2024-02",22704618,92901948],["2024-03",23359058,91609313],["2024-04",26996002,108537461],["2024-05",26916994,107337924],["2024-06",25379198,104081666],["2024-07",26805870,109132838],["2024-08",24883874,100621511],["2024-09",25555843,103676255],["2024-10",28855286,116961176],["2024-11",30107999,117550316],["2024-12",27657079,110223665],["2025-01",26906799,107465043],["2025-02",30275628,121129032],["2025-03",28221476,115221568],["2025-04",32588321,134679235],["2025-05",30771353,126800362],["2025-06",29557482,126332098],["2025-07",32672883,131169561],["2025-08",28340604,114992928],["2025-09",36544364,147207178],["2025-10",32660120,130226014],["2025-11",31915113,125972236],["2025-12",33857987,139657524]]};
+
 const C = {
   ink: "#14243B", paper: "#EDF0F5", card: "#FFFFFF", line: "#DCE2EC",
   muted: "#5E6E84", subtle: "#8A98AC", soft: "#F3F5F9",
@@ -141,8 +147,7 @@ function diagnose(values, kind) {
 }
 const fmtInt = (n) => Math.round(n).toLocaleString("ko-KR");
 
-const NOW = new Date();
-const YEARS = [NOW.getFullYear() - 2, NOW.getFullYear() - 1, NOW.getFullYear()];
+const YEARS = [2023, 2024, 2025];
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 const keyOf = (y, m) => `${y}-${String(m).padStart(2, "0")}`;
 
@@ -153,6 +158,10 @@ export default function App() {
   const [picked, setPicked] = useState(null);
   const [entries, setEntries] = useState({});
   const [series, setSeries] = useState(null);
+  const [cEntries, setCEntries] = useState({});
+  const [country, setCountry] = useState(null);
+  const [countryOn, setCountryOn] = useState(false);
+  const [cSeries, setCSeries] = useState(null);
 
   // 실제 사이트(/public/hs_codes.json)에서는 전체 데이터를 불러오고, 없으면 샘플 사용
   useEffect(() => {
@@ -169,9 +178,12 @@ export default function App() {
         {step === "select" && <Selector data={data} onApply={(p) => { setPicked(p); setStep("input"); }} />}
         {step === "input" && (
           <InputGrid picked={picked} entries={entries} setEntries={setEntries}
-            onBack={() => setStep("select")} onDiagnose={(s) => { setSeries(s); setStep("result"); }} />
+            cEntries={cEntries} setCEntries={setCEntries} country={country} setCountry={setCountry}
+            countryOn={countryOn} setCountryOn={setCountryOn}
+            onBack={() => setStep("select")}
+            onDiagnose={({ series, cSeries }) => { setSeries(series); setCSeries(cSeries); setStep("result"); }} />
         )}
-        {step === "result" && <Result picked={picked} series={series} onBack={() => setStep("input")} onRestart={() => setStep("select")} />}
+        {step === "result" && <Result picked={picked} series={series} cSeries={cSeries} country={countryOn ? country : null} onBack={() => setStep("input")} onRestart={() => setStep("select")} />}
       </div>
     </div>
   );
@@ -357,33 +369,81 @@ function TreeTab({ data, picked, setPicked }) {
 const Hint = ({ text }) => <div style={{ padding: 14, fontSize: 12.5, color: C.subtle }}>{text}</div>;
 
 /* ───────── STEP 2. 자사 월별 실적 입력 ───────── */
-function InputGrid({ picked, entries, setEntries, onBack, onDiagnose }) {
+const CELL = { width: "100%", boxSizing: "border-box", fontSize: 13, padding: "7px 9px", border: `1px solid ${C.line}`, borderRadius: 7, outline: "none", textAlign: "right", fontVariantNumeric: "tabular-nums", color: C.ink, background: "#fff" };
+
+function MonthGrids({ entries, onSet }) {
+  return (
+    <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+      {YEARS.map((y) => (
+        <div key={y} style={{ flex: "1 1 300px", minWidth: 280 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}>{y}년</div>
+          <div style={{ display: "grid", gridTemplateColumns: "34px 1fr 1fr", gap: 6, alignItems: "center" }}>
+            <div style={{ fontSize: 11, color: C.subtle }}>월</div>
+            <div style={{ fontSize: 11, color: C.subtle, textAlign: "right" }}>수출중량(kg)</div>
+            <div style={{ fontSize: 11, color: C.subtle, textAlign: "right" }}>수출금액(USD)</div>
+            {MONTHS.map((m) => {
+              const k = keyOf(y, m), e = entries[k] || {};
+              return (
+                <React.Fragment key={k}>
+                  <div style={{ fontSize: 12.5, color: C.muted, fontVariantNumeric: "tabular-nums" }}>{m}월</div>
+                  <input style={CELL} inputMode="decimal" value={e.wgt || ""} placeholder="—" onChange={(ev) => onSet(k, "wgt", ev.target.value)} />
+                  <input style={CELL} inputMode="decimal" value={e.dlr || ""} placeholder="—" onChange={(ev) => onSet(k, "dlr", ev.target.value)} />
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function buildSeries(entries) {
+  const s = [];
+  YEARS.forEach((y) => MONTHS.forEach((m) => {
+    const k = keyOf(y, m), e = entries[k]; if (!e) return;
+    const w = parseFloat(e.wgt), d = parseFloat(e.dlr);
+    if (!(w > 0) || !(d >= 0)) return;
+    s.push({ ym: k, wgt: w, dlr: d, unit: d / w });
+  }));
+  return s;
+}
+
+function InputGrid({ picked, entries, setEntries, cEntries, setCEntries, country, setCountry, countryOn, setCountryOn, onBack, onDiagnose }) {
   const [warn, setWarn] = useState("");
-  const set = (k, field, val) => setEntries((p) => ({ ...p, [k]: { ...p[k], [field]: val.replace(/[^\d.]/g, "") } }));
+  const setE = (k, field, val) => setEntries((p) => ({ ...p, [k]: { ...p[k], [field]: val.replace(/[^\d.]/g, "") } }));
+  const setC = (k, field, val) => setCEntries((p) => ({ ...p, [k]: { ...p[k], [field]: val.replace(/[^\d.]/g, "") } }));
+
   const fillSample = () => {
-    const next = {};
+    const next = {}, cnext = {};
     YEARS.forEach((y, yi) => MONTHS.forEach((m) => {
       const k = keyOf(y, m);
       const season = 1 + 0.18 * Math.sin((m / 12) * Math.PI * 2);
       const w = Math.round(80000 * season * (1 + yi * 0.12) * (0.9 + Math.random() * 0.2));
       const unit = 4.0 - yi * 0.18 + (Math.random() - 0.5) * 0.3;
       next[k] = { wgt: String(w), dlr: String(Math.round(w * unit)) };
+      const cw = Math.round(w * (0.3 + Math.random() * 0.1));
+      const cu = unit * (0.9 + Math.random() * 0.06);
+      cnext[k] = { wgt: String(cw), dlr: String(Math.round(cw * cu)) };
     }));
     setEntries(next);
+    if (countryOn) setCEntries(cnext);
   };
+
   const filledCount = Object.values(entries).filter((e) => e && e.wgt && parseFloat(e.wgt) > 0).length;
+  const cFilled = Object.values(cEntries).filter((e) => e && e.wgt && parseFloat(e.wgt) > 0).length;
+
   const run = () => {
-    const s = [];
-    YEARS.forEach((y) => MONTHS.forEach((m) => {
-      const k = keyOf(y, m), e = entries[k]; if (!e) return;
-      const w = parseFloat(e.wgt), d = parseFloat(e.dlr);
-      if (!(w > 0) || !(d >= 0)) return;
-      s.push({ ym: k, wgt: w, dlr: d, unit: d / w });
-    }));
-    if (s.length < 2) { setWarn("추세를 그리려면 최소 2개월 이상의 수출중량·수출금액을 입력해 주세요."); return; }
-    setWarn(""); onDiagnose(s);
+    const s = buildSeries(entries);
+    if (s.length < 2) { setWarn("전체 실적은 최소 2개월 이상의 수출중량·수출금액이 필요합니다."); return; }
+    if (countryOn && !country) { setWarn("특정 국가 분석을 켜셨다면 국가를 선택해 주세요. (시장·자사 국가 데이터 조회에 필요합니다)"); return; }
+    let cs = null;
+    if (countryOn && country) {
+      const built = buildSeries(cEntries);
+      if (built.length >= 2) cs = built; // 자사 국가 그래프는 입력이 2개월 이상일 때만
+    }
+    setWarn(""); onDiagnose({ series: s, cSeries: cs });
   };
-  const cellInput = { width: "100%", boxSizing: "border-box", fontSize: 13, padding: "7px 9px", border: `1px solid ${C.line}`, borderRadius: 7, outline: "none", textAlign: "right", fontVariantNumeric: "tabular-nums", color: C.ink, background: "#fff" };
 
   return (
     <div>
@@ -397,74 +457,65 @@ function InputGrid({ picked, entries, setEntries, onBack, onDiagnose }) {
           <button onClick={fillSample} style={{ background: C.soft, border: `1px solid ${C.line}`, color: C.ink, borderRadius: 9, padding: "9px 14px", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>샘플 채우기</button>
         </div>
       </div>
-      <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: 16 }}>
-        <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 2 }}>자사 최근 3년 월별 수출 실적 입력</div>
-        <div style={{ fontSize: 12.5, color: C.muted, marginBottom: 14 }}>각 달의 수출중량(kg)과 수출금액(USD)을 입력하세요. 수출이 없는 달은 비워 두면 됩니다. 단가는 자동 계산됩니다.</div>
-        <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-          {YEARS.map((y) => (
-            <div key={y} style={{ flex: "1 1 300px", minWidth: 280 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}>{y}년</div>
-              <div style={{ display: "grid", gridTemplateColumns: "34px 1fr 1fr", gap: 6, alignItems: "center" }}>
-                <div style={{ fontSize: 11, color: C.subtle }}>월</div>
-                <div style={{ fontSize: 11, color: C.subtle, textAlign: "right" }}>수출중량(kg)</div>
-                <div style={{ fontSize: 11, color: C.subtle, textAlign: "right" }}>수출금액(USD)</div>
-                {MONTHS.map((m) => {
-                  const k = keyOf(y, m), e = entries[k] || {};
-                  return (
-                    <React.Fragment key={k}>
-                      <div style={{ fontSize: 12.5, color: C.muted, fontVariantNumeric: "tabular-nums" }}>{m}월</div>
-                      <input style={cellInput} inputMode="decimal" value={e.wgt || ""} placeholder="—" onChange={(ev) => set(k, "wgt", ev.target.value)} />
-                      <input style={cellInput} inputMode="decimal" value={e.dlr || ""} placeholder="—" onChange={(ev) => set(k, "dlr", ev.target.value)} />
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+
+      {/* 전체 수출 실적 (모든 국가 합계) */}
+      <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 2 }}>① 전체 수출 실적 (2023~2025, 모든 국가 합계)</div>
+        <div style={{ fontSize: 12.5, color: C.muted, marginBottom: 14 }}>각 달의 수출중량(kg)과 수출금액(USD)을 입력하세요. 수출이 없는 달은 비워 둡니다. 단가(=수출금액÷수출중량)는 자동 계산됩니다.</div>
+        <MonthGrids entries={entries} onSet={setE} />
+        <div style={{ marginTop: 12, fontSize: 13, color: C.muted }}>입력된 개월 수: <b style={{ color: C.ink }}>{filledCount}</b> / 36</div>
+      </div>
+
+      {/* 특정 국가 수출 실적 (선택) */}
+      <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800 }}>② 특정 국가 (선택)</div>
+            <div style={{ fontSize: 12.5, color: C.muted, marginTop: 2 }}>국가를 고르면 진단 결과에 <b>해당 국가 시장 추세</b>가 추가됩니다. 자사 국가 실적까지 입력하면 자사 국가 추세도 함께 분석합니다.</div>
+          </div>
+          <button onClick={() => setCountryOn((v) => !v)} style={{ background: countryOn ? C.ink : "#fff", color: countryOn ? "#fff" : C.muted, border: `1px solid ${countryOn ? C.ink : C.line}`, borderRadius: 999, padding: "7px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            {countryOn ? "사용 중 ✓" : "+ 국가 추가"}
+          </button>
         </div>
-        {warn && <div style={{ marginTop: 14, color: C.down, fontSize: 13 }}>{warn}</div>}
-        <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, borderTop: `1px solid ${C.line}`, paddingTop: 16 }}>
-          <div style={{ fontSize: 13, color: C.muted }}>입력된 개월 수: <b style={{ color: C.ink }}>{filledCount}</b> / 36</div>
-          <button onClick={run} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 9, padding: "11px 24px", fontSize: 15, fontWeight: 800, cursor: "pointer" }}>추세 진단하기 →</button>
-        </div>
+        {countryOn && (
+          <div style={{ marginTop: 14 }}>
+            <select value={country ? country.code : ""} onChange={(e) => { const f = COUNTRIES.find((x) => x[0] === e.target.value); setCountry(f ? { code: f[0], name: f[1] } : null); }}
+              style={{ width: "100%", maxWidth: 360, boxSizing: "border-box", fontSize: 15, padding: "10px 13px", border: `1px solid ${C.line}`, borderRadius: 9, outline: "none", color: C.ink, marginBottom: 14, background: "#fff" }}>
+              <option value="">국가 선택…</option>
+              {COUNTRIES.map(([code, name]) => <option key={code} value={code}>{name} ({code})</option>)}
+            </select>
+            <div style={{ fontSize: 12.5, color: C.muted, marginBottom: 10 }}>아래는 <b>자사</b>의 해당 국가향 월별 실적입니다 (입력하지 않아도 시장 분석은 됩니다).</div>
+            <MonthGrids entries={cEntries} onSet={setC} />
+            <div style={{ marginTop: 12, fontSize: 13, color: C.muted }}>입력된 개월 수: <b style={{ color: C.ink }}>{cFilled}</b> / 36</div>
+          </div>
+        )}
+      </div>
+
+      {warn && <div style={{ marginBottom: 12, color: C.down, fontSize: 13 }}>{warn}</div>}
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button onClick={run} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 9, padding: "12px 26px", fontSize: 15, fontWeight: 800, cursor: "pointer" }}>추세 진단하기 →</button>
       </div>
     </div>
   );
 }
 
 /* ───────── STEP 3. 진단 결과 ───────── */
-function Result({ picked, series, onBack, onRestart }) {
-  const prepared = useMemo(() => {
-    if (!series || series.length === 0) return null;
-    const sorted = [...series].sort((a, b) => a.ym.localeCompare(b.ym));
-    const wgtVals = sorted.map((d) => d.wgt), unitVals = sorted.map((d) => d.unit);
-    const wgtReg = regression(wgtVals), unitReg = regression(unitVals);
-    const maxWgt = Math.max(...wgtVals), useTon = maxWgt >= 100000, wUnit = useTon ? "톤" : "kg", wDiv = useTon ? 1000 : 1;
-    const rows = sorted.map((d, i) => ({ ym: d.ym, wgtDisp: d.wgt / wDiv, wgtTrend: wgtReg ? (wgtReg.intercept + wgtReg.slope * i) / wDiv : null, unit: d.unit, unitTrend: unitReg ? unitReg.intercept + unitReg.slope * i : null, rawWgt: d.wgt, rawDlr: d.dlr }));
-    return { rows, wUnit, latest: sorted[sorted.length - 1], period: `${sorted[0].ym} ~ ${sorted[sorted.length - 1].ym} (${sorted.length}개월)`, wgtDx: diagnose(wgtVals, "wgt"), unitDx: diagnose(unitVals, "unit") };
-  }, [series]);
-  const tickFmt = (v) => (v.endsWith("-01") ? v.slice(0, 4) : "");
-  if (!prepared) return null;
+function prep(series) {
+  if (!series || series.length === 0) return null;
+  const sorted = [...series].sort((a, b) => a.ym.localeCompare(b.ym));
+  const wgtVals = sorted.map((d) => d.wgt), unitVals = sorted.map((d) => d.unit);
+  const wgtReg = regression(wgtVals), unitReg = regression(unitVals);
+  const maxWgt = Math.max(...wgtVals), useTon = maxWgt >= 100000, wUnit = useTon ? "톤" : "kg", wDiv = useTon ? 1000 : 1;
+  const rows = sorted.map((d, i) => ({ ym: d.ym, wgtDisp: d.wgt / wDiv, wgtTrend: wgtReg ? (wgtReg.intercept + wgtReg.slope * i) / wDiv : null, unit: d.unit, unitTrend: unitReg ? unitReg.intercept + unitReg.slope * i : null, rawWgt: d.wgt, rawDlr: d.dlr }));
+  return { rows, wUnit, latest: sorted[sorted.length - 1], period: `${sorted[0].ym} ~ ${sorted[sorted.length - 1].ym} (${sorted.length}개월)`, wgtDx: diagnose(wgtVals, "wgt"), unitDx: diagnose(unitVals, "unit") };
+}
 
+const tickFmt = (v) => (v.endsWith("-01") ? v.slice(0, 4) : "");
+
+function TwoCharts({ prepared, idx, scope }) {
   return (
-    <div>
-      <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-        <div style={{ display: "flex", gap: 22, flexWrap: "wrap", alignItems: "baseline" }}>
-          <div>
-            <div style={{ fontSize: 12, color: C.subtle }}>품목 · HS</div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>{picked?.name} <span style={{ color: C.muted, fontWeight: 600, fontSize: 13, fontVariantNumeric: "tabular-nums" }}>· {picked?.code}</span></div>
-          </div>
-          <Stat label="데이터 구간" value={prepared.period} />
-          <Stat label="최근월 수출중량" value={`${fmtInt(prepared.latest.wgt)} kg`} />
-          <Stat label="최근월 단가" value={`$ ${prepared.latest.unit.toFixed(2)} /kg`} />
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={onBack} style={{ background: "#fff", border: `1px solid ${C.line}`, color: C.muted, borderRadius: 9, padding: "9px 14px", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>← 입력 수정</button>
-          <button onClick={onRestart} style={{ background: C.soft, border: `1px solid ${C.line}`, color: C.ink, borderRadius: 9, padding: "9px 14px", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>새 진단</button>
-        </div>
-      </div>
-
-      <ChartCard index="01" title="자사 수출 총중량 추세" sub={`월별 수출중량 · 단위 ${prepared.wUnit}`} dx={prepared.wgtDx} color={C.wgt}>
+    <>
+      <ChartCard index={idx[0]} title={`${scope} 수출 총중량 추세`} sub={`월별 수출중량 · 단위 ${prepared.wUnit}`} dx={prepared.wgtDx} color={C.wgt}>
         <ResponsiveContainer width="100%" height={250}>
           <LineChart data={prepared.rows} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
             <CartesianGrid stroke={C.line} vertical={false} />
@@ -476,8 +527,7 @@ function Result({ picked, series, onBack, onRestart }) {
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
-
-      <ChartCard index="02" title="자사 수출 단가 추세" sub="월별 (수출금액 ÷ 수출중량) · 단위 USD/kg" dx={prepared.unitDx} color={C.unit}>
+      <ChartCard index={idx[1]} title={`${scope} 수출 단가 추세`} sub="월별 (수출금액 ÷ 수출중량) · 단위 USD/kg" dx={prepared.unitDx} color={C.unit}>
         <ResponsiveContainer width="100%" height={250}>
           <LineChart data={prepared.rows} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
             <CartesianGrid stroke={C.line} vertical={false} />
@@ -489,12 +539,118 @@ function Result({ picked, series, onBack, onRestart }) {
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
+    </>
+  );
+}
 
-      <div style={{ background: C.unit + "0D", border: `1px solid ${C.unit}33`, borderRadius: 12, padding: "14px 16px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
-        지금 결과는 <b style={{ color: C.ink }}>입력하신 자사 데이터</b>의 추세입니다. 다음 단계에서 관세청 시장 데이터를 연결하면, 이 자사 단가가 같은 품목의 <b style={{ color: C.ink }}>시장 평균·국가별 단가 대비 어디에 위치하는지</b>까지 함께 진단할 수 있습니다.
-      </div>
+function SectionBand({ label, prepared }) {
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", gap: 22, flexWrap: "wrap", alignItems: "baseline" }}>
+      <div style={{ fontSize: 16, fontWeight: 800 }}>{label}</div>
+      <Stat label="데이터 구간" value={prepared.period} />
+      <Stat label="최근월 수출중량" value={`${fmtInt(prepared.latest.wgt)} kg`} />
+      <Stat label="최근월 단가" value={`$ ${prepared.latest.unit.toFixed(2)} /kg`} />
     </div>
   );
+}
+
+function Result({ picked, series, cSeries, country, onBack, onRestart }) {
+  const selfOverall = useMemo(() => prep(series), [series]);
+  const selfCtry = useMemo(() => prep(cSeries), [cSeries]);
+
+  const [mkt, setMkt] = useState({ loading: true, overall: null, country: null, demo: false, err: "" });
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setMkt({ loading: true, overall: null, country: null, demo: false, err: "" });
+      const res = { loading: false, overall: null, country: null, demo: false, err: "" };
+      try {
+        const r = await fetch(`/api/trade?hs=${picked.code}`);
+        const j = await r.json();
+        if (j.series && j.series.length) res.overall = j.series;
+      } catch (e) {}
+      if (!res.overall && MKT[picked.code]) {
+        res.overall = MKT[picked.code].map(([ym, w, d]) => ({ ym, wgt: w, dlr: d, unit: w > 0 ? d / w : null }));
+        res.demo = true;
+      }
+      if (!res.overall) res.err = "시장 데이터를 불러오지 못했습니다. (API 한도 또는 연결 상태를 확인하세요)";
+      if (country) {
+        try {
+          const r2 = await fetch(`/api/trade?hs=${picked.code}&cnty=${country.code}`);
+          const j2 = await r2.json();
+          if (j2.series && j2.series.length) res.country = j2.series;
+        } catch (e) {}
+      }
+      if (alive) setMkt(res);
+    })();
+    return () => { alive = false; };
+  }, [picked, country]);
+
+  const mktOverall = useMemo(() => prep(mkt.overall), [mkt.overall]);
+  const mktCtry = useMemo(() => prep(mkt.country), [mkt.country]);
+  if (!selfOverall) return null;
+
+  return (
+    <div>
+      <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <div>
+          <div style={{ fontSize: 12, color: C.subtle }}>품목 · HS</div>
+          <div style={{ fontSize: 18, fontWeight: 800 }}>{picked?.name} <span style={{ color: C.muted, fontWeight: 600, fontSize: 13, fontVariantNumeric: "tabular-nums" }}>· {picked?.code}</span></div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onBack} style={{ background: "#fff", border: `1px solid ${C.line}`, color: C.muted, borderRadius: 9, padding: "9px 14px", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>← 입력 수정</button>
+          <button onClick={onRestart} style={{ background: C.soft, border: `1px solid ${C.line}`, color: C.ink, borderRadius: 9, padding: "9px 14px", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>새 진단</button>
+        </div>
+      </div>
+
+      {/* 자사 분석 */}
+      <GroupTitle text="자사 실적 분석" />
+      <SectionBand label="자사 — 전체 수출" prepared={selfOverall} />
+      <TwoCharts prepared={selfOverall} idx={["01", "02"]} scope="자사 전체" />
+      {selfCtry && (
+        <>
+          <SectionBand label={`자사 — ${country.name} 수출`} prepared={selfCtry} />
+          <TwoCharts prepared={selfCtry} idx={["03", "04"]} scope={`자사 ${country.name}`} />
+        </>
+      )}
+
+      {/* 시장 분석 (관세청) */}
+      <GroupTitle text={`시장 전체 분석 (관세청)${mkt.demo ? " · 데모 데이터" : ""}`} />
+      {mkt.loading ? (
+        <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: 36, textAlign: "center", color: C.muted, marginBottom: 16 }}>관세청 시장 데이터를 불러오는 중입니다…</div>
+      ) : mktOverall ? (
+        <>
+          <SectionBand label="시장 — 전체(모든 국가)" prepared={mktOverall} />
+          <TwoCharts prepared={mktOverall} idx={["05", "06"]} scope="시장 전체" />
+        </>
+      ) : (
+        <div style={{ background: C.down + "0D", border: `1px solid ${C.down}44`, borderRadius: 12, padding: 20, marginBottom: 16, color: C.muted, fontSize: 14 }}>
+          <b style={{ color: C.down }}>시장 데이터 없음</b><div style={{ marginTop: 4 }}>{mkt.err}</div>
+        </div>
+      )}
+
+      {country && !mkt.loading && (
+        <>
+          <GroupTitle text={`시장 — ${country.name} 분석 (관세청)`} />
+          {mktCtry ? (
+            <>
+              <SectionBand label={`시장 — ${country.name}`} prepared={mktCtry} />
+              <TwoCharts prepared={mktCtry} idx={["07", "08"]} scope={`시장 ${country.name}`} />
+            </>
+          ) : (
+            <div style={{ background: C.soft, border: `1px solid ${C.line}`, borderRadius: 12, padding: 20, marginBottom: 16, color: C.muted, fontSize: 14 }}>
+              {country.name}({country.code}) 시장 데이터를 가져오지 못했습니다. API 연결 후 표시됩니다.
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function GroupTitle({ text }) {
+  return <div style={{ fontSize: 13, fontWeight: 800, color: C.unit, letterSpacing: 1, textTransform: "uppercase", margin: "8px 0 10px", paddingLeft: 2 }}>{text}</div>;
 }
 
 function Stat({ label, value }) {
