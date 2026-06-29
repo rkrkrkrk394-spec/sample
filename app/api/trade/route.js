@@ -16,6 +16,7 @@ function tag(chunk, name) {
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const hs = (searchParams.get("hs") || "").replace(/\D/g, "");
+  const cnty = (searchParams.get("cnty") || "").replace(/[^A-Za-z]/g, "").toUpperCase();
 
   if (hs.length < 4) {
     return Response.json({ error: "HS 코드를 4자리 이상 입력해 주세요." }, { status: 400 });
@@ -29,16 +30,14 @@ export async function GET(request) {
     );
   }
 
-  // 캐시 확인
-  const hit = cache.get(hs);
+  // 캐시 확인 (HS + 국가 조합별로 저장)
+  const cacheKey = `${hs}|${cnty}`;
+  const hit = cache.get(cacheKey);
   if (hit && Date.now() - hit.ts < TTL) {
     return Response.json(hit.data);
   }
 
-  const now = new Date();
-  const Y = now.getFullYear();
-  const M = now.getMonth() + 1;
-  const years = [Y - 2, Y - 1, Y]; // 최근 3개 연도
+  const years = [2023, 2024, 2025]; // 자사 입력과 동일하게 2023~2025 고정
 
   const monthly = {}; // "YYYY-MM" -> { wgt, dlr }
   let productName = "";
@@ -46,13 +45,13 @@ export async function GET(request) {
   try {
     for (const y of years) {
       const start = `${y}01`;
-      const end = y === Y ? `${y}${String(M).padStart(2, "0")}` : `${y}12`;
+      const end = `${y}12`;
 
       const params = new URLSearchParams({
         strtYymm: start,
         endYymm: end,
         hsSgn: hs,
-        cntyCd: "",          // 비워두면 전체 국가
+        cntyCd: cnty,        // 비어 있으면 전체 국가, 값이 있으면 해당 국가
         numOfRows: "20000",
         pageNo: "1",
       });
@@ -101,10 +100,10 @@ export async function GET(request) {
     });
 
   if (series.length === 0) {
-    return Response.json({ error: "해당 HS 코드의 최근 3년 수출 데이터가 없습니다.", hs, series: [] });
+    return Response.json({ error: "해당 조건의 최근 3년 수출 데이터가 없습니다.", hs, cnty, series: [] });
   }
 
-  const data = { hs, name: productName, series };
-  cache.set(hs, { ts: Date.now(), data });
+  const data = { hs, cnty, name: productName, series };
+  cache.set(cacheKey, { ts: Date.now(), data });
   return Response.json(data);
 }
