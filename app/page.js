@@ -614,17 +614,6 @@ function Result({ picked, series, cSeries, country, marketDB, onBack, onRestart 
         </div>
       </div>
 
-      {/* 자사 분석 */}
-      <GroupTitle text="자사 실적 분석" />
-      <SectionBand label="자사 — 전체 수출" prepared={selfOverall} />
-      <TwoCharts prepared={selfOverall} idx={["01", "02"]} scope="자사 전체" />
-      {selfCtry && (
-        <>
-          <SectionBand label={`자사 — ${country.name} 수출`} prepared={selfCtry} />
-          <TwoCharts prepared={selfCtry} idx={["03", "04"]} scope={`자사 ${country.name}`} />
-        </>
-      )}
-
       {/* 시장 분석 (관세청) */}
       <GroupTitle text={`시장 전체 분석 (관세청)${mkt.demo ? " · 데모 데이터" : ""}`} />
       {mkt.loading ? (
@@ -632,7 +621,7 @@ function Result({ picked, series, cSeries, country, marketDB, onBack, onRestart 
       ) : mktOverall ? (
         <>
           <SectionBand label="시장 — 전체(모든 국가)" prepared={mktOverall} />
-          <TwoCharts prepared={mktOverall} idx={["05", "06"]} scope="시장 전체" />
+          <TwoCharts prepared={mktOverall} idx={["01", "02"]} scope="시장 전체" />
         </>
       ) : (
         <div style={{ background: C.down + "0D", border: `1px solid ${C.down}44`, borderRadius: 12, padding: 20, marginBottom: 16, color: C.muted, fontSize: 14 }}>
@@ -646,13 +635,24 @@ function Result({ picked, series, cSeries, country, marketDB, onBack, onRestart 
           {mktCtry ? (
             <>
               <SectionBand label={`시장 — ${country.name}`} prepared={mktCtry} />
-              <TwoCharts prepared={mktCtry} idx={["07", "08"]} scope={`시장 ${country.name}`} />
+              <TwoCharts prepared={mktCtry} idx={["03", "04"]} scope={`시장 ${country.name}`} />
             </>
           ) : (
             <div style={{ background: C.soft, border: `1px solid ${C.line}`, borderRadius: 12, padding: 20, marginBottom: 16, color: C.muted, fontSize: 14 }}>
               {country.name}({country.code}) 시장 데이터를 가져오지 못했습니다. API 연결 후 표시됩니다.
             </div>
           )}
+        </>
+      )}
+
+      {/* 자사 분석 */}
+      <GroupTitle text="자사 실적 분석" />
+      <SectionBand label="자사 — 전체 수출" prepared={selfOverall} />
+      <TwoCharts prepared={selfOverall} idx={["05", "06"]} scope="자사 전체" />
+      {selfCtry && (
+        <>
+          <SectionBand label={`자사 — ${country.name} 수출`} prepared={selfCtry} />
+          <TwoCharts prepared={selfCtry} idx={["07", "08"]} scope={`자사 ${country.name}`} />
         </>
       )}
     </div>
