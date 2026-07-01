@@ -137,15 +137,15 @@ function diagnose(values, kind) {
   const reg = regression(values); if (!reg) return null;
   const last = values.length - 1, start = reg.intercept, end = reg.intercept + reg.slope * last;
   const pct = start !== 0 ? ((end - start) / Math.abs(start)) * 100 : 0;
-  const dir = pct > 5 ? "up" : pct < -5 ? "down" : "flat";
-  const color = dir === "up" ? C.up : dir === "down" ? C.down : C.flat;
+  const dir = pct >= 0 ? "up" : "down";
+  const color = dir === "up" ? C.up : C.down;
   let label, note;
   if (kind === "wgt") {
-    label = dir === "up" ? "물량 증가형" : dir === "down" ? "물량 감소형" : "물량 보합형";
-    note = dir === "up" ? "수출 물량이 3년간 확대되는 추세입니다." : dir === "down" ? "수출 물량이 3년간 축소되는 추세입니다." : "수출 물량이 대체로 유지되고 있습니다.";
+    label = dir === "up" ? "상승" : "하락";
+    note = dir === "up" ? "수출 물량이 3년간 확대되는 추세입니다." : "수출 물량이 3년간 축소되는 추세입니다.";
   } else {
-    label = dir === "up" ? "단가 상승형" : dir === "down" ? "단가 하락형" : "단가 보합형";
-    note = dir === "up" ? "단가가 우상향 — ‘제값받기’가 개선되는 신호입니다." : dir === "down" ? "단가가 우하향 — 범용화·협상력 약화 위험 신호입니다." : "단가가 안정적으로 유지되고 있습니다.";
+    label = dir === "up" ? "상승" : "하락";
+    note = dir === "up" ? "단가가 우상향 — ‘제값받기’가 개선되는 신호입니다." : "단가가 우하향 — 범용화·협상력 약화 위험 신호입니다.";
   }
   return { dir, pct, label, color, note };
 }
