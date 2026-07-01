@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 
 /* 미리보기용 샘플 (면류·꽃·소스류). 실제 사이트에서는 /hs_codes.json 전체를 불러옵니다. */
@@ -113,6 +113,10 @@ const COUNTRIES = [["GH","가나"],["GA","가봉"],["GY","가이아나"],["GM","
 // 데모 시장 폴백 (HS 1902 7개 품목, 2023~2025). [ym, 수출중량, 수출금액] — API가 막혔을 때 미리보기용. 실서비스는 /api/trade 사용.
 const MKT = {"1902111000":[["2023-01",603,2440],["2023-02",3093,12658],["2023-03",7858,8038],["2023-04",9358,8702],["2023-05",2875,12636],["2023-06",2966,12411],["2023-07",8219,15542],["2023-08",3861,20338],["2023-09",19484,73983],["2023-10",705,848],["2023-11",5127,10376],["2023-12",2277,4488],["2024-01",27980,59216],["2024-02",3824,21759],["2024-03",88,618],["2024-04",2828,10231],["2024-05",468,1633],["2024-06",3080,4175],["2024-07",841,3485],["2024-08",1611,5470],["2024-09",253,436],["2024-10",1160,3731],["2024-11",1952,6722],["2024-12",2432,3592],["2025-01",830,1927],["2025-02",2029,2048],["2025-03",4149,8256],["2025-04",2027,5358],["2025-05",1724,4660],["2025-06",3729,7933],["2025-08",2728,3166],["2025-09",3486,5287],["2025-10",22344,24042],["2025-11",37918,160423],["2025-12",236,570]],"1902191000":[["2023-01",972281,2042682],["2023-02",1418205,3028316],["2023-03",1441360,3153927],["2023-04",1578699,3250848],["2023-05",1317904,2953503],["2023-06",1308635,2868389],["2023-07",945480,2228643],["2023-08",1296235,2738254],["2023-09",1325641,2750491],["2023-10",1179593,2585964],["2023-11",1741797,3569391],["2023-12",1418432,3028071],["2024-01",1643380,3261468],["2024-02",1257103,2592353],["2024-03",1236675,2551895],["2024-04",1472529,2905768],["2024-05",1464549,3119418],["2024-06",1340631,2825905],["2024-07",1632932,3292648],["2024-08",1248067,2469391],["2024-09",1343584,2739878],["2024-10",1225253,2537020],["2024-11",1643955,3203261],["2024-12",1587342,3034935],["2025-01",1322564,2506163],["2025-02",1670252,3147788],["2025-03",1698070,3434064],["2025-04",1572846,2992212],["2025-05",1341761,2749633],["2025-06",1268995,2477753],["2025-07",1487713,2973610],["2025-08",1858342,3484287],["2025-09",1730571,3143488],["2025-10",1557646,2876329],["2025-11",1418634,2748484],["2025-12",1386307,2704435]],"1902192000":[["2023-01",124067,532000],["2023-02",144765,633883],["2023-03",148203,618292],["2023-04",130477,582436],["2023-05",134760,544060],["2023-06",191990,757130],["2023-07",132450,562028],["2023-08",124667,542411],["2023-09",136932,558380],["2023-10",103807,448317],["2023-11",151295,629967],["2023-12",109622,462299],["2024-01",158290,681204],["2024-02",149262,589700],["2024-03",155536,663607],["2024-04",136711,539073],["2024-05",140142,556342],["2024-06",152857,585628],["2024-07",141360,567456],["2024-08",108351,458090],["2024-09",112840,491077],["2024-10",131261,555422],["2024-11",124192,534236],["2024-12",153134,629796],["2025-01",115856,479746],["2025-02",138067,570409],["2025-03",170349,671579],["2025-04",193618,775379],["2025-05",153503,564986],["2025-06",172693,676191],["2025-07",133026,613880],["2025-08",88790,425806],["2025-09",140188,556199],["2025-10",85885,315216],["2025-11",112877,458305],["2025-12",142250,596224]],"1902193000":[["2023-01",127478,337304],["2023-02",338673,952820],["2023-03",450671,1115732],["2023-04",521804,1264863],["2023-05",481043,1216401],["2023-06",466516,1212291],["2023-07",259549,686051],["2023-08",283218,761045],["2023-09",221462,570535],["2023-10",196836,482595],["2023-11",72442,197822],["2023-12",82498,210183],["2024-01",156638,425276],["2024-02",372463,892588],["2024-03",551855,1484535],["2024-04",451182,1221612],["2024-05",415632,1092273],["2024-06",291433,701936],["2024-07",339782,782071],["2024-08",312605,749679],["2024-09",168420,418073],["2024-10",145797,405896],["2024-11",141842,331352],["2024-12",147188,431348],["2025-01",100329,199633],["2025-02",227237,542979],["2025-03",395687,998956],["2025-04",543967,1258864],["2025-05",455582,1219930],["2025-06",385203,1027001],["2025-07",340463,819851],["2025-08",305136,885360],["2025-09",263814,722033],["2025-10",144196,415133],["2025-11",181987,439273],["2025-12",171956,463357]],"1902200000":[["2023-01",1301291,4617582],["2023-02",1542662,5544371],["2023-03",1457505,5324077],["2023-04",1238373,4674720],["2023-05",1373142,5045040],["2023-06",1737328,6183390],["2023-07",1326948,4813758],["2023-08",1359380,4863748],["2023-09",1318222,4801730],["2023-10",1817175,6353555],["2023-11",2217879,7595785],["2023-12",1728766,6609678],["2024-01",1381371,5227935],["2024-02",1497612,5602173],["2024-03",1730043,6698360],["2024-04",1740242,6223970],["2024-05",1588115,5432885],["2024-06",1532718,5422358],["2024-07",1637436,5511056],["2024-08",1468045,4889246],["2024-09",1404161,4870929],["2024-10",1549530,5592672],["2024-11",1662063,5237180],["2024-12",1332109,4797264],["2025-01",1522605,4787797],["2025-02",1716578,5475844],["2025-03",1527110,5182964],["2025-04",1856955,6274550],["2025-05",1536690,5080842],["2025-06",1619746,5102731],["2025-07",2009860,6444285],["2025-08",1621904,5290857],["2025-09",1531975,5248802],["2025-10",1064878,3877425],["2025-11",1451831,5235252],["2025-12",1266129,4639337]],"1902301010":[["2023-01",16830586,61505999],["2023-02",18925369,70718110],["2023-03",19637411,75634199],["2023-04",18550467,73951045],["2023-05",18934965,75070951],["2023-06",22629768,89168269],["2023-07",19264384,75921065],["2023-08",21126924,85657529],["2023-09",22751201,89605626],["2023-10",22705376,87954115],["2023-11",23437174,90776919],["2023-12",19413391,76438881],["2024-01",21223142,85751012],["2024-02",22704618,92901948],["2024-03",23359058,91609313],["2024-04",26996002,108537461],["2024-05",26916994,107337924],["2024-06",25379198,104081666],["2024-07",26805870,109132838],["2024-08",24883874,100621511],["2024-09",25555843,103676255],["2024-10",28855286,116961176],["2024-11",30107999,117550316],["2024-12",27657079,110223665],["2025-01",26906799,107465043],["2025-02",30275628,121129032],["2025-03",28221476,115221568],["2025-04",32588321,134679235],["2025-05",30771353,126800362],["2025-06",29557482,126332098],["2025-07",32672883,131169561],["2025-08",28340604,114992928],["2025-09",36544364,147207178],["2025-10",32660120,130226014],["2025-11",31915113,125972236],["2025-12",33857987,139657524]]};
 
+// USD→KRW 월평균 환율 (매매기준율). 실질단가(기준월 대비 배율) 계산용.
+const FX = {"2023-01":1247.25,"2023-02":1270.74,"2023-03":1305.73,"2023-04":1320.01,"2023-05":1328.21,"2023-06":1296.71,"2023-07":1286.3,"2023-08":1318.47,"2023-09":1329.47,"2023-10":1350.69,"2023-11":1310.39,"2023-12":1303.98,"2024-01":1323.57,"2024-02":1331.74,"2024-03":1330.69,"2024-04":1367.83,"2024-05":1365.39,"2024-06":1380.13,"2024-07":1383.38,"2024-08":1354.15,"2024-09":1334.82,"2024-10":1361.0,"2024-11":1393.38,"2024-12":1434.42,"2025-01":1455.79,"2025-02":1445.56,"2025-03":1456.95,"2025-04":1444.31,"2025-05":1394.49,"2025-06":1366.95,"2025-07":1375.22,"2025-08":1389.66,"2025-09":1391.83,"2025-10":1423.36,"2025-11":1457.77,"2025-12":1467.4};
+const CPI_BASE_YM = "2023-01"; // 현재 26년1월 가정 → 그전 36개월의 시작(기준월)
+
 const C = {
   ink: "#14243B", paper: "#EDF0F5", card: "#FFFFFF", line: "#DCE2EC",
   muted: "#5E6E84", subtle: "#8A98AC", soft: "#F3F5F9",
@@ -163,6 +167,7 @@ export default function App() {
   const [countryOn, setCountryOn] = useState(false);
   const [cSeries, setCSeries] = useState(null);
   const [marketDB, setMarketDB] = useState(null);
+  const [cpiDB, setCpiDB] = useState(null);
 
   // 실제 사이트(/public/hs_codes.json)에서는 전체 데이터를 불러오고, 없으면 샘플 사용
   useEffect(() => {
@@ -174,6 +179,10 @@ export default function App() {
     fetch("/market_data.json")
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => { if (j) setMarketDB(j); })
+      .catch(() => {});
+    fetch("/cpi.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j) setCpiDB(j); })
       .catch(() => {});
   }, []);
 
@@ -189,7 +198,7 @@ export default function App() {
             onBack={() => setStep("select")}
             onDiagnose={({ series, cSeries }) => { setSeries(series); setCSeries(cSeries); setStep("result"); }} />
         )}
-        {step === "result" && <Result picked={picked} series={series} cSeries={cSeries} country={countryOn ? country : null} marketDB={marketDB} onBack={() => setStep("input")} onRestart={() => setStep("select")} />}
+        {step === "result" && <Result picked={picked} series={series} cSeries={cSeries} country={countryOn ? country : null} marketDB={marketDB} cpiDB={cpiDB} onBack={() => setStep("input")} onRestart={() => setStep("select")} />}
       </div>
     </div>
   );
@@ -517,8 +526,27 @@ function prep(series) {
 }
 
 const tickFmt = (v) => (v.endsWith("-01") ? v.slice(0, 4) : "");
+const REAL = "#7A5AF0"; // 실질단가 선 색
+
+// 실질단가(기준월 대비 배율) = 명목단가 × [환율(월)/환율(base)] × [CPI(base)/CPI(월)]
+// 기준월엔 배율=1 이라 실질=명목. 결과가 명목과 같은 USD/kg 스케일이라 같은 축에 겹칩니다.
+function withReal(prepared, code, cpiDB) {
+  if (!prepared || !cpiDB || !code || !cpiDB[code]) return prepared;
+  const cpi = cpiDB[code];
+  const cpiBase = cpi[CPI_BASE_YM], fxBase = FX[CPI_BASE_YM];
+  if (!cpiBase || !fxBase) return prepared;
+  let has = false;
+  const rows = prepared.rows.map((r) => {
+    const fx = FX[r.ym], cm = cpi[r.ym];
+    let realUnit = null;
+    if (r.unit != null && fx && cm) { realUnit = r.unit * (fx / fxBase) * (cpiBase / cm); has = true; }
+    return { ...r, realUnit };
+  });
+  return { ...prepared, rows, hasReal: has };
+}
 
 function TwoCharts({ prepared, idx, scope }) {
+  const hasReal = prepared.hasReal;
   return (
     <>
       <ChartCard index={idx[0]} title={`${scope} 수출 총중량 추세`} sub={`월별 수출중량 · 단위 ${prepared.wUnit}`} dx={prepared.wgtDx} color={C.wgt}>
@@ -533,15 +561,17 @@ function TwoCharts({ prepared, idx, scope }) {
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
-      <ChartCard index={idx[1]} title={`${scope} 수출 단가 추세`} sub="월별 (수출금액 ÷ 수출중량) · 단위 USD/kg" dx={prepared.unitDx} color={C.unit}>
-        <ResponsiveContainer width="100%" height={250}>
+      <ChartCard index={idx[1]} title={`${scope} 수출 단가 추세`} sub={hasReal ? `명목 vs 실질단가 (실질 = 기준월 ${CPI_BASE_YM} 대비 환율·물가 보정) · USD/kg` : "월별 (수출금액 ÷ 수출중량) · 단위 USD/kg"} dx={prepared.unitDx} color={C.unit}>
+        <ResponsiveContainer width="100%" height={hasReal ? 270 : 250}>
           <LineChart data={prepared.rows} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
             <CartesianGrid stroke={C.line} vertical={false} />
             <XAxis dataKey="ym" tickFormatter={tickFmt} tick={{ fontSize: 12, fill: C.muted }} axisLine={{ stroke: C.line }} tickLine={false} interval={0} />
             <YAxis tick={{ fontSize: 11, fill: C.muted }} axisLine={false} tickLine={false} width={44} tickFormatter={(v) => `$${v.toFixed(1)}`} domain={["auto", "auto"]} />
-            <Tooltip content={<UnitTip />} />
-            <Line type="monotone" dataKey="unitTrend" stroke={C.trend} strokeWidth={1.5} strokeDasharray="5 4" dot={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey="unit" stroke={C.unit} strokeWidth={2.4} dot={false} isAnimationActive={false} connectNulls />
+            <Tooltip content={<UnitTip hasReal={hasReal} />} />
+            {hasReal && <Legend verticalAlign="top" height={24} iconType="plainline" wrapperStyle={{ fontSize: 12 }} />}
+            <Line type="monotone" dataKey="unitTrend" stroke={C.trend} strokeWidth={1.5} strokeDasharray="5 4" dot={false} isAnimationActive={false} legendType="none" />
+            <Line type="monotone" dataKey="unit" name="명목단가" stroke={C.unit} strokeWidth={2.4} dot={false} isAnimationActive={false} connectNulls />
+            {hasReal && <Line type="monotone" dataKey="realUnit" name="실질단가" stroke={REAL} strokeWidth={2.4} dot={false} isAnimationActive={false} connectNulls />}
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -560,9 +590,11 @@ function SectionBand({ label, prepared }) {
   );
 }
 
-function Result({ picked, series, cSeries, country, marketDB, onBack, onRestart }) {
+function Result({ picked, series, cSeries, country, marketDB, cpiDB, onBack, onRestart }) {
+  const allowReal = !!(marketDB && marketDB[picked.code] && country);
+  const realCode = allowReal && country ? country.code : null;
   const selfOverall = useMemo(() => prep(series), [series]);
-  const selfCtry = useMemo(() => prep(cSeries), [cSeries]);
+  const selfCtry = useMemo(() => withReal(prep(cSeries), realCode, cpiDB), [cSeries, realCode, cpiDB]);
 
   const [mkt, setMkt] = useState({ loading: true, overall: null, country: null, demo: false, err: "" });
 
@@ -598,7 +630,7 @@ function Result({ picked, series, cSeries, country, marketDB, onBack, onRestart 
   }, [picked, country, marketDB]);
 
   const mktOverall = useMemo(() => prep(mkt.overall), [mkt.overall]);
-  const mktCtry = useMemo(() => prep(mkt.country), [mkt.country]);
+  const mktCtry = useMemo(() => withReal(prep(mkt.country), realCode, cpiDB), [mkt.country, realCode, cpiDB]);
   if (!selfOverall) return null;
 
   return (
@@ -689,4 +721,4 @@ function ChartCard({ index, title, sub, dx, color, children }) {
 }
 function tipBox(children) { return <div style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 8, padding: "8px 11px", fontSize: 12.5, boxShadow: "0 2px 8px rgba(20,36,59,0.08)" }}>{children}</div>; }
 function WgtTip({ active, payload, wUnit }) { if (!active || !payload || !payload.length) return null; const d = payload[0].payload; return tipBox(<><div style={{ fontWeight: 700, marginBottom: 4 }}>{d.ym}</div><div style={{ color: C.wgt }}>수출중량 {fmtInt(d.rawWgt)} kg</div><div style={{ color: C.muted }}>≈ {fmtInt(d.wgtDisp)} {wUnit}</div></>); }
-function UnitTip({ active, payload }) { if (!active || !payload || !payload.length) return null; const d = payload[0].payload; if (d.unit == null) return null; return tipBox(<><div style={{ fontWeight: 700, marginBottom: 4 }}>{d.ym}</div><div style={{ color: C.unit }}>단가 $ {d.unit.toFixed(3)} /kg</div><div style={{ color: C.muted }}>금액 ${fmtInt(d.rawDlr)} · 중량 {fmtInt(d.rawWgt)}kg</div></>); }
+function UnitTip({ active, payload, hasReal }) { if (!active || !payload || !payload.length) return null; const d = payload[0].payload; if (d.unit == null) return null; return tipBox(<><div style={{ fontWeight: 700, marginBottom: 4 }}>{d.ym}</div><div style={{ color: C.unit }}>명목단가 $ {d.unit.toFixed(3)} /kg</div>{hasReal && d.realUnit != null && <div style={{ color: REAL }}>실질단가 $ {d.realUnit.toFixed(3)} /kg</div>}<div style={{ color: C.muted }}>금액 ${fmtInt(d.rawDlr)} · 중량 {fmtInt(d.rawWgt)}kg</div></>); }
