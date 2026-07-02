@@ -133,6 +133,16 @@ function regression(values) {
   const slope = (n * sxy - sx * sy) / (n * sxx - sx * sx);
   return { slope, intercept: (sy - slope * sx) / n };
 }
+// [x,y] 쌍으로 회귀 (x = 달력상 월 인덱스). 결측 달의 실제 시간 간격을 반영.
+function regIdx(pts) {
+  const p = pts.filter((q) => q[1] != null && isFinite(q[1]));
+  const n = p.length; if (n < 2) return null;
+  let sx = 0, sy = 0, sxy = 0, sxx = 0;
+  for (const [x, y] of p) { sx += x; sy += y; sxy += x * y; sxx += x * x; }
+  const denom = n * sxx - sx * sx; if (denom === 0) return null;
+  const slope = (n * sxy - sx * sy) / denom;
+  return { slope, intercept: (sy - slope * sx) / n };
+}
 function diagnose(values, kind) {
   const reg = regression(values); if (!reg) return null;
   const last = values.length - 1, start = reg.intercept, end = reg.intercept + reg.slope * last;
@@ -636,12 +646,31 @@ function InputGrid({ picked, entries, setEntries, cEntries, setCEntries, country
 /* ───────── STEP 3. 진단 결과 ───────── */
 function prep(series) {
   if (!series || series.length === 0) return null;
-  const sorted = [...series].sort((a, b) => a.ym.localeCompare(b.ym));
-  const wgtVals = sorted.map((d) => d.wgt), unitVals = sorted.map((d) => d.unit);
-  const wgtReg = regression(wgtVals), unitReg = regression(unitVals);
-  const maxWgt = Math.max(...wgtVals), useTon = maxWgt >= 100000, wUnit = useTon ? "톤" : "kg", wDiv = useTon ? 1000 : 1;
-  const rows = sorted.map((d, i) => ({ ym: d.ym, wgtDisp: d.wgt / wDiv, wgtTrend: wgtReg ? (wgtReg.intercept + wgtReg.slope * i) / wDiv : null, unit: d.unit, unitTrend: unitReg ? unitReg.intercept + unitReg.slope * i : null, rawWgt: d.wgt, rawDlr: d.dlr }));
-  return { rows, wUnit, latest: sorted[sorted.length - 1], period: `${sorted[0].ym} ~ ${sorted[sorted.length - 1].ym} (${sorted.length}개월)`, wgtDx: diagnose(wgtVals, "wgt"), unitDx: diagnose(unitVals, "unit") };
+  const map = {};
+  for (const d of series) map[d.ym] = d;
+  const present = ALL_YMS.filter((ym) => map[ym]);
+  if (present.length === 0) return null;
+  const idx = (ym) => ALL_YMS.indexOf(ym);
+  const wgtReg = regIdx(present.map((ym) => [idx(ym), map[ym].wgt]));
+  const unitReg = regIdx(present.map((ym) => [idx(ym), map[ym].unit]));
+  const wgtValsP = present.map((ym) => map[ym].wgt);
+  const maxWgt = Math.max(...wgtValsP), useTon = maxWgt >= 100000, wUnit = useTon ? "톤" : "kg", wDiv = useTon ? 1000 : 1;
+  const iMin = idx(present[0]), iMax = idx(present[present.length - 1]);
+  const rows = ALL_YMS.map((ym, i) => {
+    const d = map[ym];
+    const inRange = i >= iMin && i <= iMax;
+    return {
+      ym,
+      wgtDisp: d ? d.wgt / wDiv : null,
+      wgtTrend: wgtReg && inRange ? (wgtReg.intercept + wgtReg.slope * i) / wDiv : null,
+      unit: d ? d.unit : null,
+      unitTrend: unitReg && inRange ? unitReg.intercept + unitReg.slope * i : null,
+      rawWgt: d ? d.wgt : null,
+      rawDlr: d ? d.dlr : null,
+    };
+  });
+  const lastYm = present[present.length - 1];
+  return { rows, wUnit, latest: map[lastYm], period: `${present[0]} ~ ${lastYm} (${present.length}개월)`, wgtDx: diagnose(wgtValsP, "wgt"), unitDx: diagnose(present.map((ym) => map[ym].unit), "unit") };
 }
 
 const tickFmt = (v) => (v.endsWith("-01") ? v.slice(0, 4) : "");
@@ -1021,5 +1050,5 @@ function ChartCard({ index, title, sub, dx, color, children }) {
   );
 }
 function tipBox(children) { return <div style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 8, padding: "8px 11px", fontSize: 12.5, boxShadow: "0 2px 8px rgba(20,36,59,0.08)" }}>{children}</div>; }
-function WgtTip({ active, payload, wUnit }) { if (!active || !payload || !payload.length) return null; const d = payload[0].payload; return tipBox(<><div style={{ fontWeight: 700, marginBottom: 4 }}>{d.ym}</div><div style={{ color: C.wgt }}>수출중량 {fmtInt(d.rawWgt)} kg</div><div style={{ color: C.muted }}>≈ {fmtInt(d.wgtDisp)} {wUnit}</div></>); }
+function WgtTip({ active, payload, wUnit }) { if (!active || !payload || !payload.length) return null; const d = payload[0].payload; if (d.rawWgt == null) return null; return tipBox(<><div style={{ fontWeight: 700, marginBottom: 4 }}>{d.ym}</div><div style={{ color: C.wgt }}>수출중량 {fmtInt(d.rawWgt)} kg</div><div style={{ color: C.muted }}>≈ {fmtInt(d.wgtDisp)} {wUnit}</div></>); }
 function UnitTip({ active, payload, hasReal }) { if (!active || !payload || !payload.length) return null; const d = payload[0].payload; if (d.unit == null) return null; return tipBox(<><div style={{ fontWeight: 700, marginBottom: 4 }}>{d.ym}</div><div style={{ color: C.unit }}>명목단가 $ {d.unit.toFixed(3)} /kg</div>{hasReal && d.realUnit != null && <div style={{ color: REAL }}>실질단가 $ {d.realUnit.toFixed(3)} /kg</div>}<div style={{ color: C.muted }}>금액 ${fmtInt(d.rawDlr)} · 중량 {fmtInt(d.rawWgt)}kg</div></>); }
