@@ -684,13 +684,51 @@ function withReal(prepared, code, cpiDB) {
   const cpiBase = cpi[CPI_BASE_YM], fxBase = FX[CPI_BASE_YM];
   if (!cpiBase || !fxBase) return prepared;
   let has = false;
-  const rows = prepared.rows.map((r) => {
+  let rows = prepared.rows.map((r) => {
     const fx = FX[r.ym], cm = cpi[r.ym];
     let realUnit = null;
     if (r.unit != null && fx && cm) { realUnit = r.unit * (fx / fxBase) * (cpiBase / cm); has = true; }
     return { ...r, realUnit };
   });
-  return { ...prepared, rows, hasReal: has };
+  if (!has) return { ...prepared, rows, hasReal: false };
+
+  // 실질 회귀선 + 명목·실질 비교 통계
+  const idx = (ym) => ALL_YMS.indexOf(ym);
+  const realP = rows.filter((r) => r.realUnit != null);
+  const nomP = rows.filter((r) => r.unit != null);
+  const realReg = regIdx(realP.map((r) => [idx(r.ym), r.realUnit]));
+  const nomReg = regIdx(nomP.map((r) => [idx(r.ym), r.unit]));
+  const iMin = realP.length ? idx(realP[0].ym) : 0, iMax = realP.length ? idx(realP[realP.length - 1].ym) : 0;
+  rows = rows.map((r) => {
+    const i = idx(r.ym), inR = i >= iMin && i <= iMax;
+    return { ...r, realTrend: realReg && inR ? realReg.intercept + realReg.slope * i : null };
+  });
+  const meanR = realP.length ? realP.reduce((s, r) => s + r.realUnit, 0) / realP.length : 0;
+  const meanN = nomP.length ? nomP.reduce((s, r) => s + r.unit, 0) / nomP.length : 0;
+  const realAnn = realReg && meanR ? (realReg.slope * 12 / meanR) * 100 : 0;
+  const nomAnn = nomReg && meanN ? (nomReg.slope * 12 / meanN) * 100 : 0;
+  const lastReal = realP.length ? realP[realP.length - 1].realUnit : null;
+  const lastNom = nomP.length ? nomP[nomP.length - 1].unit : null;
+  const diffPct = lastNom ? Math.abs(lastNom - lastReal) / lastNom * 100 : null;
+  const realStats = { nomAnn, realAnn, lastNom, lastReal, diffPct };
+  return { ...prepared, rows, hasReal: true, realStats };
+}
+
+// 명목 vs 실질 설명 (자사-국가 기준): 방향 상반(한쪽이라도 연 3%↑) 또는 최근 격차 ≥15%
+function buildRealExplain(stats) {
+  if (!stats || stats.lastNom == null || stats.lastReal == null) return null;
+  const dirDiff = Math.sign(stats.nomAnn) !== Math.sign(stats.realAnn) && (Math.abs(stats.nomAnn) >= 3 || Math.abs(stats.realAnn) >= 3);
+  const bigGap = stats.diffPct != null && stats.diffPct >= 15;
+  if (!dirDiff && !bigGap) return null;
+  const msgs = [];
+  if (dirDiff) {
+    const nomUp = stats.nomAnn >= 0;
+    msgs.push(`명목 단가는 ${nomUp ? "상승" : "하락"}하지만, 환율·현지물가를 반영한 실질 기준으로는 ${nomUp ? "하락" : "상승"}하고 있습니다. 명목 수치만으로는 실제 수익 방향을 반대로 읽을 수 있습니다.`);
+  }
+  if (bigGap) {
+    msgs.push(`명목과 실질 단가의 최근 격차가 약 ${Math.round(stats.diffPct)}%로 큽니다. 해당 국가의 환율·물가 변동이 그만큼 크다는 뜻이라, 명목 단가만 보면 실제 수익성을 놓칠 수 있습니다.`);
+  }
+  return { text: msgs.join(" "), tone: dirDiff ? "W" : "N" };
 }
 
 function TwoCharts({ prepared, idx, scope }) {
@@ -719,6 +757,7 @@ function TwoCharts({ prepared, idx, scope }) {
             {hasReal && <Legend verticalAlign="top" height={24} iconType="plainline" wrapperStyle={{ fontSize: 12 }} />}
             <Line type="monotone" dataKey="unitTrend" stroke={C.trend} strokeWidth={1.5} strokeDasharray="5 4" dot={false} isAnimationActive={false} legendType="none" />
             <Line type="monotone" dataKey="unit" name="명목단가" stroke={C.unit} strokeWidth={2.4} dot={false} isAnimationActive={false} connectNulls />
+            {hasReal && <Line type="monotone" dataKey="realTrend" stroke={REAL} strokeWidth={1.5} strokeDasharray="5 4" dot={false} isAnimationActive={false} legendType="none" connectNulls />}
             {hasReal && <Line type="monotone" dataKey="realUnit" name="실질단가" stroke={REAL} strokeWidth={2.4} dot={false} isAnimationActive={false} connectNulls />}
           </LineChart>
         </ResponsiveContainer>
@@ -781,6 +820,10 @@ function Result({ picked, series, cSeries, country, marketDB, cpiDB, onBack, onR
   const mktCtry = useMemo(() => withReal(prep(mkt.country), realCode, cpiDB), [mkt.country, realCode, cpiDB]);
   const diag = useMemo(() => computeDiag({ code: picked.code, selfRows: series, mktRows: mkt.overall, ctryMktRows: mkt.country, country, marketDB, cpiDB }), [picked, series, mkt.overall, mkt.country, country, marketDB, cpiDB]);
   const card = useMemo(() => pickCard(diag), [diag]);
+  const realCmp = useMemo(() => {
+    const ex = buildRealExplain(selfCtry && selfCtry.realStats);
+    return ex && country ? { ...ex, scope: country.name } : null;
+  }, [selfCtry, country]);
   if (!selfOverall) return null;
 
   return (
@@ -797,7 +840,7 @@ function Result({ picked, series, cSeries, country, marketDB, cpiDB, onBack, onR
       </div>
 
       {/* 시장 분석 (관세청) */}
-      {diag && <DiagCard card={card} fx={diag.fx} power={diag.power} />}
+      {diag && <DiagCard card={card} fx={diag.fx} power={diag.power} realCmp={realCmp} />}
       {diag && <DiagPanel diag={diag} />}
       <GroupTitle text={`시장 전체 분석 (관세청)${mkt.demo ? " · 데모 데이터" : ""}`} />
       {mkt.loading ? (
@@ -952,7 +995,7 @@ function pickCard(diag) {
 }
 const TONE = { G: { c: "#1F8A5B", t: "강점" }, N: { c: "#2E6F9E", t: "정상" }, W: { c: "#B5792E", t: "점검 권장" }, D: { c: "#C0504D", t: "우선 점검" } };
 
-function DiagCard({ card, fx, power }) {
+function DiagCard({ card, fx, power, realCmp }) {
   if (!card) return null;
   if (card.insufficient) {
     return (
@@ -980,6 +1023,12 @@ function DiagCard({ card, fx, power }) {
         {power && power !== "중립" && power !== "데이터없음" && badge("현지물가", power, power === "주의" ? C.down : C.up)}
         <span style={{ fontSize: 12, color: C.subtle, alignSelf: "center" }}>신뢰도 {card.conf} · 자사상태 {card.state} · 위치 {card.pos} · 티어 {card.tier}</span>
       </div>
+      {realCmp && (
+        <div style={{ marginTop: 12, background: REAL + "0D", border: `1px solid ${REAL}40`, borderRadius: 10, padding: "11px 13px" }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: REAL, marginBottom: 3 }}>명목 vs 실질단가 (자사·{realCmp.scope})</div>
+          <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.6 }}>{realCmp.text}</div>
+        </div>
+      )}
       <div style={{ fontSize: 11.5, color: C.subtle, marginTop: 12, borderTop: `1px solid ${C.soft}`, paddingTop: 10 }}>
         본 분석은 공공데이터 기반 통계 신호이며, 최종 판단은 사용자의 몫입니다.
       </div>
