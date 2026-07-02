@@ -151,6 +151,124 @@ function diagnose(values, kind) {
 }
 const fmtInt = (n) => Math.round(n).toLocaleString("ko-KR");
 
+/* ============ 진단 변수 엔진 (검증 단계: 변수·라벨만 계산) ============ */
+const ALL_YMS = [2023, 2024, 2025].flatMap((y) => Array.from({ length: 12 }, (_, i) => `${y}-${String(i + 1).padStart(2, "0")}`));
+
+// 회귀 + 기울기 t값 + 표준화기울기
+function regT(vals) {
+  const pts = vals.map((v, i) => [i, v]).filter((p) => p[1] != null && isFinite(p[1]));
+  const n = pts.length; if (n < 3) return null;
+  let sx = 0, sy = 0, sxy = 0, sxx = 0;
+  for (const [x, y] of pts) { sx += x; sy += y; sxy += x * y; sxx += x * x; }
+  const denom = n * sxx - sx * sx; if (denom === 0) return null;
+  const slope = (n * sxy - sx * sy) / denom;
+  const intercept = (sy - slope * sx) / n;
+  let sse = 0; for (const [x, y] of pts) { const e = y - (intercept + slope * x); sse += e * e; }
+  const se = Math.sqrt((sse / (n - 2)) / (sxx - (sx * sx) / n));
+  const t = se > 0 ? slope / se : 0;
+  const mean = sy / n; let vv = 0; for (const [, y] of pts) vv += (y - mean) ** 2;
+  const std = Math.sqrt(vv / n);
+  const stdSlope = std > 0 ? (slope * n) / std : 0;
+  return { slope, t, stdSlope, n };
+}
+// 5단계 추세 (t + 표준화기울기)
+function trend5(vals) {
+  const r = regT(vals);
+  if (!r) return { label: "데이터부족", dir: "→", t: 0 };
+  const { t, stdSlope } = r;
+  let label;
+  if (Math.abs(t) < 2) label = "유지";
+  else if (t >= 2) label = stdSlope > 1.5 ? "급상승" : "완상승";
+  else label = stdSlope < -1.5 ? "급하락" : "완하락";
+  const dir = label === "급상승" || label === "완상승" ? "↑" : label === "급하락" || label === "완하락" ? "↓" : "→";
+  return { label, dir, t };
+}
+const confOf = (t) => { const a = Math.abs(t); return a >= 3 ? "뚜렷" : a >= 2 ? "보통" : "약함"; };
+
+// rows([{ym,wgt,dlr}]) → ym으로 정렬된 map
+function toMap(rows) { const m = {}; for (const r of (rows || [])) m[r.ym] = r; return m; }
+const unitVals = (map) => ALL_YMS.map((ym) => { const r = map[ym]; return r && r.wgt > 0 ? r.dlr / r.wgt : null; });
+const wgtVals = (map) => ALL_YMS.map((ym) => { const r = map[ym]; return r ? r.wgt : null; });
+// 최근 12개월 가중평균 단가
+function last12Unit(map) {
+  const last = ALL_YMS.slice(-12); let w = 0, d = 0;
+  for (const ym of last) { const r = map[ym]; if (r && r.wgt > 0) { w += r.wgt; d += r.dlr; } }
+  return w > 0 ? d / w : null;
+}
+const median = (a) => { const s = [...a].sort((x, y) => x - y); const n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : null; };
+
+function posLabel(z) {
+  return z > 1.5 ? "매우높음" : z > 0.5 ? "다소높음" : z >= -0.5 ? "평균" : z >= -1.5 ? "다소낮음" : "매우낮음";
+}
+
+// 전체 변수 계산 (market_data 품목 + 자사 데이터 전제)
+function computeDiag({ code, selfRows, mktRows, ctryMktRows, country, marketDB, cpiDB }) {
+  const db = marketDB && marketDB[code];
+  if (!db || !selfRows || selfRows.length < 3) return null;
+  const self = toMap(selfRows), mkt = toMap(mktRows || []);
+
+  const fw = trend5(wgtVals(self));
+  let fp = trend5(unitVals(self));
+  const conf = confOf(fp.t);
+  if (conf === "약함") fp = { ...fp, label: "유지", dir: "→" }; // 신뢰도 약함 → 추세 유지 강등
+  const mp = trend5(unitVals(mkt));
+
+  // 위치 Z (Robust): 자사 최근12개월 vs 국가별 최근12개월 분포
+  const firmAvg = last12Unit(self);
+  const dist = [];
+  for (const cc of Object.keys(db.byCountry || {})) {
+    const v = last12Unit(toMap((db.byCountry[cc] || []).map(([ym, w, d]) => ({ ym, wgt: w, dlr: d }))));
+    if (v != null) dist.push(v);
+  }
+  let position = null;
+  if (firmAvg != null && dist.length >= 4) {
+    const med = median(dist);
+    const madv = median(dist.map((x) => Math.abs(x - med))) * 1.4826;
+    const z = madv > 0 ? (firmAvg - med) / madv : 0;
+    position = { z, label: posLabel(z), n: dist.length, firmAvg, med };
+  } else if (firmAvg != null) {
+    position = { z: null, label: "데이터부족", n: dist.length, firmAvg };
+  }
+
+  // 상대단가 (자사 ÷ 시장 전체)
+  const rel = ALL_YMS.map((ym) => {
+    const s = self[ym], m = mkt[ym];
+    const su = s && s.wgt > 0 ? s.dlr / s.wgt : null;
+    const mu = m && m.wgt > 0 ? m.dlr / m.wgt : null;
+    return su != null && mu != null && mu !== 0 ? su / mu : null;
+  });
+  const relT = trend5(rel);
+  const relLast = [...rel].reverse().find((v) => v != null) ?? null;
+
+  // 환율 경보 (자사 원화단가 방향)
+  const krw = ALL_YMS.map((ym) => { const s = self[ym]; const u = s && s.wgt > 0 ? s.dlr / s.wgt : null; return u != null && FX[ym] ? u * FX[ym] : null; });
+  const krwDir = trend5(krw).dir;
+  let fx = "없음";
+  if (krwDir === "↓") fx = "경보"; else if (fp.dir === "↑" && krwDir === "→") fx = "주의";
+
+  // 구매력 신호 (현지 CPI 대비) — 선택 국가 필요
+  let power = null;
+  if (country && cpiDB && cpiDB[country.code]) {
+    const cpiArr = ALL_YMS.map((ym) => cpiDB[country.code][ym] ?? null);
+    const cpiDir = trend5(cpiArr).dir;
+    if (cpiDir === "↑" && (fp.dir === "→" || fp.dir === "↓")) power = "기회";
+    else if (fp.dir === "↑" && (cpiDir === "→" || cpiDir === "↓")) power = "주의";
+    else power = "중립";
+  }
+
+  // 국가 티어 P/S/C (선택 국가 단가 수준 vs 시장, ±10%)
+  let tier = null;
+  if (country && ctryMktRows) {
+    const cAvg = last12Unit(toMap(ctryMktRows)); const mAvg = last12Unit(mkt);
+    if (cAvg != null && mAvg) {
+      const ratio = cAvg / mAvg;
+      tier = ratio > 1.1 ? "P(프리미엄)" : ratio < 0.9 ? "C(범용)" : "S(표준)";
+    }
+  }
+
+  return { fw, fp, mp, conf, position, rel: relT, relLast, fx, power, tier, country };
+}
+
 const YEARS = [2023, 2024, 2025];
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 const keyOf = (y, m) => `${y}-${String(m).padStart(2, "0")}`;
@@ -631,6 +749,7 @@ function Result({ picked, series, cSeries, country, marketDB, cpiDB, onBack, onR
 
   const mktOverall = useMemo(() => prep(mkt.overall), [mkt.overall]);
   const mktCtry = useMemo(() => withReal(prep(mkt.country), realCode, cpiDB), [mkt.country, realCode, cpiDB]);
+  const diag = useMemo(() => computeDiag({ code: picked.code, selfRows: series, mktRows: mkt.overall, ctryMktRows: mkt.country, country, marketDB, cpiDB }), [picked, series, mkt.overall, mkt.country, country, marketDB, cpiDB]);
   if (!selfOverall) return null;
 
   return (
@@ -647,6 +766,7 @@ function Result({ picked, series, cSeries, country, marketDB, cpiDB, onBack, onR
       </div>
 
       {/* 시장 분석 (관세청) */}
+      {diag && <DiagPanel diag={diag} />}
       <GroupTitle text={`시장 전체 분석 (관세청)${mkt.demo ? " · 데모 데이터" : ""}`} />
       {mkt.loading ? (
         <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: 36, textAlign: "center", color: C.muted, marginBottom: 16 }}>관세청 시장 데이터를 불러오는 중입니다…</div>
@@ -693,6 +813,44 @@ function Result({ picked, series, cSeries, country, marketDB, cpiDB, onBack, onR
 
 function GroupTitle({ text }) {
   return <div style={{ fontSize: 13, fontWeight: 800, color: C.unit, letterSpacing: 1, textTransform: "uppercase", margin: "8px 0 10px", paddingLeft: 2 }}>{text}</div>;
+}
+
+function DiagPanel({ diag }) {
+  if (!diag) return null;
+  const colorOf = (dir) => (dir === "↑" ? C.up : dir === "↓" ? C.down : C.flat);
+  const Row = ({ label, value, color, sub }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "9px 0", borderBottom: `1px solid ${C.soft}`, gap: 10 }}>
+      <span style={{ fontSize: 13, color: C.muted }}>{label}</span>
+      <span style={{ fontSize: 14, fontWeight: 700, color: color || C.ink, textAlign: "right" }}>{value}{sub && <span style={{ fontSize: 12, color: C.subtle, fontWeight: 500 }}> {sub}</span>}</span>
+    </div>
+  );
+  const d = diag;
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 14, padding: 18, marginBottom: 18 }}>
+      <div style={{ fontSize: 12, letterSpacing: 1, color: C.unit, fontWeight: 700, textTransform: "uppercase", marginBottom: 2 }}>진단 변수 (검증용 · 카드 매핑 전)</div>
+      <div style={{ fontSize: 12.5, color: C.subtle, marginBottom: 12 }}>market_data 품목 기준. 아래 변수들이 이후 진단 카드의 입력이 됩니다.</div>
+
+      <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 300px", minWidth: 260 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: C.ink, marginBottom: 4 }}>추세</div>
+          <Row label="자사 중량" value={d.fw.label} color={colorOf(d.fw.dir)} />
+          <Row label="자사 단가" value={d.fp.label} color={colorOf(d.fp.dir)} sub={`신뢰도 ${d.conf}`} />
+          <Row label="시장 단가" value={d.mp.label} color={colorOf(d.mp.dir)} />
+          <Row label="상대단가(자사÷시장)" value={d.rel.label} color={colorOf(d.rel.dir)} sub={d.relLast != null ? `현재 ${(d.relLast).toFixed(2)}배` : ""} />
+        </div>
+        <div style={{ flex: "1 1 300px", minWidth: 260 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: C.ink, marginBottom: 4 }}>위치 · 국가 · 경보</div>
+          <Row label="위치(자사 vs 국가분포)" value={d.position ? d.position.label : "데이터 부족"} sub={d.position && d.position.z != null ? `Z=${d.position.z.toFixed(2)} · n=${d.position.n}` : (d.position ? `n=${d.position.n}` : "")} />
+          <Row label="국가 티어" value={d.tier || "국가 미선택"} color={d.tier ? C.ink : C.subtle} />
+          <Row label="환율 경보" value={d.fx} color={d.fx === "경보" ? C.down : d.fx === "주의" ? C.unit : C.flat} />
+          <Row label="구매력 신호" value={d.power || "CPI/국가 없음"} color={d.power === "주의" ? C.down : d.power === "기회" ? C.up : C.flat} />
+        </div>
+      </div>
+      <div style={{ fontSize: 11.5, color: C.subtle, marginTop: 10, lineHeight: 1.5 }}>
+        추세=24개월 회귀 t값·표준화기울기 / 위치=최근 12개월 가중평균의 Robust Z(중앙값·MAD) / 상대단가=자사÷시장 추세. 라벨 기준은 임시값이며 조정 예정입니다.
+      </div>
+    </div>
+  );
 }
 
 function Stat({ label, value }) {
