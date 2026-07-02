@@ -750,6 +750,7 @@ function Result({ picked, series, cSeries, country, marketDB, cpiDB, onBack, onR
   const mktOverall = useMemo(() => prep(mkt.overall), [mkt.overall]);
   const mktCtry = useMemo(() => withReal(prep(mkt.country), realCode, cpiDB), [mkt.country, realCode, cpiDB]);
   const diag = useMemo(() => computeDiag({ code: picked.code, selfRows: series, mktRows: mkt.overall, ctryMktRows: mkt.country, country, marketDB, cpiDB }), [picked, series, mkt.overall, mkt.country, country, marketDB, cpiDB]);
+  const card = useMemo(() => pickCard(diag), [diag]);
   if (!selfOverall) return null;
 
   return (
@@ -766,6 +767,7 @@ function Result({ picked, series, cSeries, country, marketDB, cpiDB, onBack, onR
       </div>
 
       {/* 시장 분석 (관세청) */}
+      {diag && <DiagCard card={card} fx={diag.fx} power={diag.power} />}
       {diag && <DiagPanel diag={diag} />}
       <GroupTitle text={`시장 전체 분석 (관세청)${mkt.demo ? " · 데모 데이터" : ""}`} />
       {mkt.loading ? (
@@ -813,6 +815,146 @@ function Result({ picked, series, cSeries, country, marketDB, cpiDB, onBack, onR
 
 function GroupTitle({ text }) {
   return <div style={{ fontSize: 13, fontWeight: 800, color: C.unit, letterSpacing: 1, textTransform: "uppercase", margin: "8px 0 10px", paddingLeft: 2 }}>{text}</div>;
+}
+
+/* ============ 레이어1: 39개 진단 카드 매핑 ============ */
+const FIRM_STATE = { "↑↑": "이상적성장", "↑→": "물량확대", "↑↓": "박리다매", "→↑": "단가인상", "→→": "안정", "→↓": "단가침식", "↓↑": "프리미엄전환", "↓→": "물량축소", "↓↓": "동반위축" };
+
+const CARDS = {
+  F01: { name: "전방위 성장", tone: "G", text: "물량·단가 동반 상승 중입니다({fw},{fp}). 이상적 성장이 관찰됩니다. 현재 단가 {pos}, 시장 {mp}." },
+  F02: { name: "범용시장 돌파 성장", tone: "G", text: "저단가 범용 시장에서 물량·단가를 함께 끌어올리고 있습니다({fw},{fp}). 범용 시장 내 차별화 성장이 관찰됩니다." },
+  F03: { name: "차별화 상승 — 시장 역행", tone: "G", text: "시장 단가 하락({mp}) 속 귀사는 단가 인상 중입니다({fp}). 시장 역행 차별화가 관찰됩니다. 현재 {pos}." },
+  F04: { name: "차별화 상승 — 시장 상회", tone: "G", text: "물량 유지 속 단가 인상 중입니다({fp}). 시장 평균 상회 개선이 관찰됩니다. 현재 {pos}." },
+  F05: { name: "범용시장 단가 인상", tone: "G", text: "저단가 범용 시장에서 단가 인상 중입니다({fp}). 범용 시장 내 가격 개선이 관찰됩니다." },
+  F06: { name: "프리미엄 전환", tone: "G", text: "물량 축소·단가 인상 중입니다({fw},{fp}). 프리미엄 전환이 관찰됩니다. 현재 {pos}." },
+  F07: { name: "범용시장 프리미엄 전환", tone: "G", text: "저단가 시장에서 물량 축소·단가 인상 중입니다({fw},{fp}). 범용 시장 내 고가 전환이 관찰됩니다." },
+  F08: { name: "물량확대 — 최저위 프리미엄시장", tone: "W", text: "단가 유지·물량 확대 중입니다({fw}). 고단가 시장인데 귀사 단가가 최저위권이어서 프리미엄 시장 내 저가 물량 확대가 관찰됩니다. 단가 여건 점검을 권장합니다." },
+  F09: { name: "물량확대 — 저위 프리미엄시장", tone: "W", text: "단가 유지·물량 확대 중입니다({fw}). 고단가 시장에서 귀사 단가 하위권이어서 재협상 여지 점검을 권장합니다." },
+  F10: { name: "물량확대 — 저위 표준·범용", tone: "N", text: "단가 유지·물량 확대 중입니다({fw}). 시장이 저단가대이며 현재 단가 하위입니다." },
+  F11: { name: "물량확대 — 평균권", tone: "N", text: "단가 유지·물량 확대 중이며 현재 단가 평균입니다. 안정적 물량 성장이 관찰됩니다." },
+  F12: { name: "물량확대 — 상위", tone: "N", text: "단가 유지·물량 확대 중이며 현재 단가 상위입니다. 우위 유지 물량 성장이 관찰됩니다." },
+  F13: { name: "안정 — 최저위 프리미엄시장 고착", tone: "W", text: "물량·단가 변화 없음. 고단가 시장인데 귀사 단가가 최저위권에 고착되어 재협상 여지 점검을 권장합니다." },
+  F14: { name: "안정 — 저위 고착", tone: "W", text: "물량·단가 변화 없으며 현재 단가 저위입니다. 개선 흐름이 관찰되지 않아 점검을 권장합니다." },
+  F15: { name: "안정 — 저위 범용시장", tone: "N", text: "물량·단가 변화 없으며 현재 단가 하위이나 시장이 저단가대입니다. 시장 재검토 관점의 점검을 권장합니다." },
+  F16: { name: "안정 — 평균 유지", tone: "N", text: "물량·단가 안정 유지, 현재 단가 평균입니다." },
+  F17: { name: "안정 — 우위 유지", tone: "N", text: "안정 유지, 현재 단가 시장 평균을 다소 상회합니다." },
+  F18: { name: "안정 — 프리미엄 정착", tone: "N", text: "안정 유지, 현재 단가 상위입니다. 프리미엄 포지션 정착이 관찰됩니다." },
+  F19: { name: "물량축소 — 선택과 집중", tone: "N", text: "단가 유지·물량 축소 중입니다({fw}). 단가 상위여서 고가 중심 선택과 집중이 관찰됩니다." },
+  F20: { name: "물량축소 — 평균권", tone: "N", text: "단가 유지·물량 축소 중이며 현재 단가 평균입니다. 물량 축소 배경 점검을 권장합니다." },
+  F21: { name: "물량축소 — 저위 프리미엄시장", tone: "W", text: "단가 유지·물량 축소 중입니다({fw}). 고단가 시장에서 귀사 단가 하위여서 재협상 여지 점검을 권장합니다." },
+  F22: { name: "물량축소 — 저위 표준·범용", tone: "W", text: "단가 유지·물량 축소 중이며 현재 단가 하위입니다. 물량 축소 배경 점검을 권장합니다." },
+  F23: { name: "박리다매 — 시장 역행", tone: "W", text: "시장 단가 상승({mp}) 속 단가 인하·물량 확대 중입니다({fp},{fw}). 시장 역행 가격 전략이 관찰됩니다. 물량·단가 균형 점검을 권장합니다." },
+  F24: { name: "박리다매 — 프리미엄시장 동조", tone: "W", text: "단가 인하·물량 확대 중입니다({fp},{fw}). 고단가 가능 시장이어서 물량 위한 단가 인하 적절성 점검을 권장합니다." },
+  F25: { name: "박리다매 — 범용시장 동조", tone: "N", text: "단가 인하·물량 확대 중입니다({fp},{fw}). 시장도 저단가·하락 국면이어서 물량 중심 전략이 관찰됩니다." },
+  F26: { name: "침식 — 최저위 나 홀로 하락", tone: "D", text: "시장 단가 상승({mp}) 속 귀사만 하락 중입니다({fp}). 최저위권이어서 시장 단절·저위가 동시 확인됩니다. 우선 점검 대상으로 판정됩니다." },
+  F27: { name: "침식 — 저위 나 홀로 하락", tone: "W", text: "시장 상승 속 귀사만 하락 중입니다({fp}). 하위 이탈이 관찰되어 점검을 권장합니다." },
+  F28: { name: "침식 — 평균권 이탈", tone: "W", text: "시장 상승 속 귀사만 하락 중입니다({fp}). 평균권 이탈이 관찰되어 점검을 권장합니다." },
+  F29: { name: "침식 — 우위 약화", tone: "W", text: "시장 상승 속 귀사 단가 하락 중입니다({fp}). 우위 약화가 관찰되어 점검을 권장합니다." },
+  F30: { name: "침식 — 프리미엄 약화", tone: "W", text: "시장 상승 속 귀사 단가 하락 중입니다({fp}). 프리미엄 약화가 관찰되어 점검을 권장합니다." },
+  F31: { name: "침식 — 저위 시장동조", tone: "W", text: "귀사 단가 하락 중이며 시장도 같은 방향이나 현재 단가 하위여서 저위 추가 하락 점검을 권장합니다." },
+  F32: { name: "침식 — 평균·상위 시장동조", tone: "N", text: "귀사 단가 하락 중이나 시장도 같은 방향이어서 시장 영향으로 관찰됩니다. 현재 {pos}." },
+  F33: { name: "동반위축 — 최저위 역행 프리미엄시장", tone: "D", text: "시장 단가 상승({mp}) 속 물량·단가 동반 하락 중입니다({fw},{fp}). 고단가 시장인데 최저위권이어서 시장 단절·저위·물량 감소가 동시 확인됩니다. 우선 점검 대상으로 판정됩니다." },
+  F34: { name: "동반위축 — 최저위 역행 표준·범용", tone: "W", text: "시장 상승 속 물량·단가 동반 하락 중입니다({fw},{fp}). 최저위이나 시장이 저단가대여서 시장 재검토 관점 점검을 권장합니다." },
+  F35: { name: "동반위축 — 저위 역행", tone: "W", text: "시장 상승 속 물량·단가 동반 하락 중입니다({fw},{fp}). 하위 이탈이 관찰되어 점검을 권장합니다." },
+  F36: { name: "동반위축 — 평균권 역행", tone: "W", text: "시장 상승 속 물량·단가 동반 하락 중입니다({fw},{fp}). 평균권 이탈이 관찰되어 점검을 권장합니다." },
+  F37: { name: "동반위축 — 상위 역행", tone: "W", text: "시장 상승 속 물량·단가 동반 하락 중입니다({fw},{fp}). 상위 약화가 관찰되어 점검을 권장합니다." },
+  F38: { name: "동반위축 — 저위 시장동조", tone: "W", text: "물량·단가 동반 하락 중이며 시장도 하락이나 현재 단가 하위여서 저위 추가 위축 점검을 권장합니다." },
+  F39: { name: "동반위축 — 평균·상위 시장동조", tone: "N", text: "물량·단가 동반 하락 중이나 시장 전체도 하락입니다({mp}). 시장 영향으로 관찰됩니다. 현재 {pos}." },
+};
+
+function resolveCardId(state, pos, tier, align) {
+  const low2 = pos === "매우낮음" || pos === "다소낮음";
+  const high2 = pos === "다소높음" || pos === "매우높음";
+  switch (state) {
+    case "이상적성장": return tier === "C" ? "F02" : "F01";
+    case "프리미엄전환": return tier === "C" ? "F07" : "F06";
+    case "물량확대":
+      if (pos === "매우낮음" && tier === "P") return "F08";
+      if (pos === "다소낮음" && tier === "P") return "F09";
+      if (low2 && (tier === "S" || tier === "C")) return "F10";
+      if (pos === "평균") return "F11";
+      return "F12";
+    case "안정":
+      if (pos === "매우낮음" && tier === "P") return "F13";
+      if ((pos === "다소낮음" && tier === "P") || (pos === "매우낮음" && tier !== "P")) return "F14";
+      if (pos === "다소낮음" && tier !== "P") return "F15";
+      if (pos === "평균") return "F16";
+      if (pos === "다소높음") return "F17";
+      return "F18";
+    case "물량축소":
+      if (high2) return "F19";
+      if (pos === "평균") return "F20";
+      if (low2 && tier === "P") return "F21";
+      return "F22";
+    case "박리다매":
+      if (align === "거스름") return "F23";
+      return tier === "C" ? "F25" : "F24";
+    case "단가침식":
+      if (align === "거스름") return { "매우낮음": "F26", "다소낮음": "F27", "평균": "F28", "다소높음": "F29", "매우높음": "F30" }[pos];
+      return low2 ? "F31" : "F32";
+    case "동반위축":
+      if (align === "거스름") {
+        if (pos === "매우낮음") return tier === "P" ? "F33" : "F34";
+        if (pos === "다소낮음") return "F35";
+        if (pos === "평균") return "F36";
+        return "F37";
+      }
+      return low2 ? "F38" : "F39";
+    default: return null;
+  }
+}
+
+function pickCard(diag) {
+  if (!diag) return null;
+  const fw = diag.fw.dir, fp = diag.fp.dir, mp = diag.mp.dir;
+  const state = FIRM_STATE[fw + fp];
+  const pos = diag.position && diag.position.z != null ? diag.position.label : null;
+  if (!state || !pos) return { insufficient: true };
+  const tier = diag.tier ? diag.tier[0] : "S";
+  let align = "중립";
+  if (fp === "↓" && mp === "↑") align = "거스름"; else if (fp === "↓" && mp === "↓") align = "따름";
+
+  const id = state === "단가인상" ? (mp === "↓" ? "F03" : tier === "C" ? "F05" : "F04") : resolveCardId(state, pos, tier, align);
+  const card = id && CARDS[id];
+  if (!card) return { insufficient: true };
+  const text = card.text.replace(/{fw}/g, diag.fw.label).replace(/{fp}/g, diag.fp.label).replace(/{mp}/g, diag.mp.label).replace(/{pos}/g, pos);
+  return { id, name: card.name, tone: card.tone, text, conf: diag.conf, state, pos, tier: diag.tier || "미선택" };
+}
+const TONE = { G: { c: "#1F8A5B", t: "강점" }, N: { c: "#2E6F9E", t: "정상" }, W: { c: "#B5792E", t: "점검 권장" }, D: { c: "#C0504D", t: "우선 점검" } };
+
+function DiagCard({ card, fx, power }) {
+  if (!card) return null;
+  if (card.insufficient) {
+    return (
+      <div style={{ background: C.soft, border: `1px solid ${C.line}`, borderRadius: 14, padding: 18, marginBottom: 18, color: C.muted, fontSize: 14 }}>
+        진단 카드 판정 보류 — 자사 데이터와 국가별 분포(표본 4개국 이상)가 있어야 카드가 확정됩니다.
+      </div>
+    );
+  }
+  const tn = TONE[card.tone] || TONE.N;
+  const badge = (label, val, col) => (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: col + "14", border: `1px solid ${col}44`, color: col, borderRadius: 999, padding: "4px 11px", fontSize: 12.5, fontWeight: 700 }}>{label} {val}</span>
+  );
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.line}`, borderLeft: `5px solid ${tn.c}`, borderRadius: 14, padding: 20, marginBottom: 18 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 12, fontWeight: 800, color: tn.c, fontVariantNumeric: "tabular-nums" }}>{card.id}</span>
+          <span style={{ fontSize: 18, fontWeight: 800 }}>{card.name}</span>
+        </div>
+        <span style={{ background: tn.c, color: "#fff", borderRadius: 999, padding: "4px 12px", fontSize: 12.5, fontWeight: 800 }}>{tn.t}</span>
+      </div>
+      <div style={{ fontSize: 14.5, lineHeight: 1.65, color: C.ink }}>{card.text}</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+        {fx && fx !== "없음" && badge("환율", fx, fx === "경보" ? C.down : C.unit)}
+        {power && power !== "중립" && power !== "데이터없음" && badge("구매력", power, power === "주의" ? C.down : C.up)}
+        <span style={{ fontSize: 12, color: C.subtle, alignSelf: "center" }}>신뢰도 {card.conf} · 자사상태 {card.state} · 위치 {card.pos} · 티어 {card.tier}</span>
+      </div>
+      <div style={{ fontSize: 11.5, color: C.subtle, marginTop: 12, borderTop: `1px solid ${C.soft}`, paddingTop: 10 }}>
+        본 분석은 공공데이터 기반 통계 신호이며, 최종 판단은 사용자의 몫입니다.
+      </div>
+    </div>
+  );
 }
 
 function DiagPanel({ diag }) {
