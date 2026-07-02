@@ -156,7 +156,8 @@ const ALL_YMS = [2023, 2024, 2025].flatMap((y) => Array.from({ length: 12 }, (_,
 
 // 회귀 + 기울기 t값 + 표준화기울기
 function regT(vals) {
-  const pts = vals.map((v, i) => [i, v]).filter((p) => p[1] != null && isFinite(p[1]));
+  const v24 = vals.slice(-24); // 최근 24개월만 회귀 대상
+  const pts = v24.map((v, i) => [i, v]).filter((p) => p[1] != null && isFinite(p[1]));
   const n = pts.length; if (n < 3) return null;
   let sx = 0, sy = 0, sxy = 0, sxx = 0;
   for (const [x, y] of pts) { sx += x; sy += y; sxy += x * y; sxx += x * x; }
