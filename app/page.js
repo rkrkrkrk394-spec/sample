@@ -257,7 +257,7 @@ function computeDiag({ code, selfRows, mktRows, ctryMktRows, country, marketDB, 
   let fx = "없음";
   if (krwDir === "↓") fx = "경보"; else if (fp.dir === "↑" && krwDir === "→") fx = "주의";
 
-  // 구매력 신호 (현지 CPI 대비) — 선택 국가 필요
+  // 현지물가 신호 (선택 국가 CPI 추세 대비 자사 단가) — 선택 국가 필요
   let power = null;
   if (country && cpiDB && cpiDB[country.code]) {
     const cpiArr = ALL_YMS.map((ym) => cpiDB[country.code][ym] ?? null);
@@ -977,7 +977,7 @@ function DiagCard({ card, fx, power }) {
       <div style={{ fontSize: 14.5, lineHeight: 1.65, color: C.ink }}>{card.text}</div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
         {fx && fx !== "없음" && badge("환율", fx, fx === "경보" ? C.down : C.unit)}
-        {power && power !== "중립" && power !== "데이터없음" && badge("구매력", power, power === "주의" ? C.down : C.up)}
+        {power && power !== "중립" && power !== "데이터없음" && badge("현지물가", power, power === "주의" ? C.down : C.up)}
         <span style={{ fontSize: 12, color: C.subtle, alignSelf: "center" }}>신뢰도 {card.conf} · 자사상태 {card.state} · 위치 {card.pos} · 티어 {card.tier}</span>
       </div>
       <div style={{ fontSize: 11.5, color: C.subtle, marginTop: 12, borderTop: `1px solid ${C.soft}`, paddingTop: 10 }}>
@@ -1015,7 +1015,7 @@ function DiagPanel({ diag }) {
           <Row label="위치(자사 vs 국가분포)" value={d.position ? d.position.label : "데이터 부족"} sub={d.position && d.position.z != null ? `Z=${d.position.z.toFixed(2)} · n=${d.position.n}` : (d.position ? `n=${d.position.n}` : "")} />
           <Row label="국가 티어" value={d.tier || "국가 미선택"} color={d.tier ? C.ink : C.subtle} />
           <Row label="환율 경보" value={d.fx} color={d.fx === "경보" ? C.down : d.fx === "주의" ? C.unit : C.flat} />
-          <Row label="구매력 신호" value={d.power || "CPI/국가 없음"} color={d.power === "주의" ? C.down : d.power === "기회" ? C.up : C.flat} />
+          <Row label="현지물가 신호" value={d.power || "CPI/국가 없음"} color={d.power === "주의" ? C.down : d.power === "기회" ? C.up : C.flat} />
         </div>
       </div>
       <div style={{ fontSize: 11.5, color: C.subtle, marginTop: 10, lineHeight: 1.5 }}>
